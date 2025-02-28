@@ -298,22 +298,37 @@ button:hover {
 }
 
 #cardContainer {
-	display: flex;
-	justify-content: center;
-	align-items: center;
+	position: relative;
 	background-color: #f0f0f0;
-	padding: 20px;
 	border-radius: 12px;
 	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-	overflow: auto;
-	height: 100%;
+	overflow: hidden;
+	height: 0;
+	padding-bottom: 50%;
+	width: 100%;
+}
+
+#cardContainer::after {
+	content: '1280 × 640 px';
+	position: absolute;
+	bottom: 10px;
+	right: 10px;
+	font-size: 12px;
+	color: #666;
+	background-color: rgba(255, 255, 255, 0.7);
+	padding: 2px 6px;
+	border-radius: 4px;
+	pointer-events: none;
+	z-index: 10;
 }
 
 /* Card Styles */
 .card {
+	position: absolute;
+	top: 0;
+	left: 0;
 	width: 100%;
-	max-width: 1280px;
-	aspect-ratio: 2 / 1;
+	height: 100%;
 	background-color: var(--bg-color);
 	border-radius: 8px;
 	overflow: hidden;
@@ -321,11 +336,11 @@ button:hover {
 	display: flex;
 	flex-direction: column;
 	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-	position: relative;
 	font-family: 'Roboto', sans-serif;
 	background-position: center;
 	background-size: cover;
 	background-repeat: no-repeat;
+	transform-origin: center;
 }
 
 .has-bg-image::before {
@@ -435,6 +450,7 @@ button:hover {
 	font-weight: bold;
 	margin-bottom: 80px;
 	font-family: var(--primary-font);
+	margin-bottom: 30%;
 }
 
 .logo-container {
@@ -482,7 +498,35 @@ textarea {
 	font-family: var(--primary-font);
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 1350px) {
+	#cardContainer {
+		padding-bottom: 50%;
+	}
+
+	.card {
+		transform: scale(0.8);
+		margin-right: 20%; /* Compensar por la escala */
+		margin-bottom: 10%;
+	}
+}
+
+@media (max-width: 1100px) {
+	.card {
+		transform: scale(0.6);
+		margin-right: 40%;
+		margin-bottom: 20%;
+	}
+}
+
+@media (max-width: 900px) {
+	.card {
+		transform: scale(0.5);
+		margin-right: 50%;
+		margin-bottom: 25%;
+	}
+}
+
+@media (max-width: 768px) {
 	.generator {
 		flex-direction: column;
 	}
@@ -494,5 +538,15 @@ textarea {
 
 	.actions {
 		flex-direction: column;
+	}
+
+	#cardContainer {
+		padding-bottom: 50%;
+	}
+
+	.card {
+		transform: scale(0.4);
+		margin-right: 60%;
+		margin-bottom: 30%;
 	}
 }
