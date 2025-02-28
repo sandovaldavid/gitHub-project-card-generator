@@ -68,11 +68,11 @@ document.addEventListener('DOMContentLoaded', function () {
 		displayDescription.textContent = description;
 
 		// Adjust card layout based on whether there's a description
-		const cardBody = document.querySelector('.card-body');
+		// En lugar de ocultar el elemento, ocultamos solo el texto
 		if (description) {
-			cardBody.style.display = 'flex';
+			displayDescription.style.display = 'block';
 		} else {
-			cardBody.style.display = 'none';
+			displayDescription.style.display = 'none';
 		}
 
 		// Update border color
