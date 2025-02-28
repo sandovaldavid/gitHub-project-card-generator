@@ -2,19 +2,13 @@
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
-		<meta
-			name="viewport"
-			content="width=device-width, initial-scale=1.0" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>GitHub Project Card Generator</title>
 		<link
 			href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
 			rel="stylesheet" />
-		<link
-			rel="icon"
-			href="/static/images/logo-github-card-generator.webp" />
-		<link
-			rel="stylesheet"
-			href="./static/styles/style.css" />
+		<link rel="icon" href="/static/images/logo-github-card-generator.webp" />
+		<link rel="stylesheet" href="./static/styles/style.css" />
 		<link
 			rel="stylesheet"
 			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
@@ -43,9 +37,7 @@
 									type="text"
 									id="username"
 									placeholder="Enter your GitHub username" />
-								<button
-									id="loadProfile"
-									class="action-button">
+								<button id="loadProfile" class="action-button">
 									<i class="fas fa-download"></i> Load
 								</button>
 							</div>
@@ -56,18 +48,12 @@
 						<h2><i class="fas fa-project-diagram"></i> Project Information</h2>
 						<div class="control-group">
 							<label for="repoName">Repository Name:</label>
-							<input
-								type="text"
-								id="repoName"
-								placeholder="Enter repository name" />
+							<input type="text" id="repoName" placeholder="Enter repository name" />
 						</div>
 
 						<div class="control-group">
 							<label for="projectName">Project Name:</label>
-							<input
-								type="text"
-								id="projectName"
-								placeholder="Enter project name" />
+							<input type="text" id="projectName" placeholder="Enter project name" />
 						</div>
 
 						<div class="control-group">
@@ -84,10 +70,7 @@
 						<div class="control-group">
 							<label for="projectColor">Project Name Color:</label>
 							<div class="color-input-group">
-								<input
-									type="color"
-									id="projectColor"
-									value="#ffffff" />
+								<input type="color" id="projectColor" value="#ffffff" />
 								<span class="color-value">#ffffff</span>
 							</div>
 						</div>
@@ -95,10 +78,7 @@
 						<div class="control-group">
 							<label for="borderColor">Bottom Border Color:</label>
 							<div class="color-input-group">
-								<input
-									type="color"
-									id="borderColor"
-									value="#00a0ff" />
+								<input type="color" id="borderColor" value="#00a0ff" />
 								<span class="color-value">#00a0ff</span>
 							</div>
 						</div>
@@ -106,10 +86,7 @@
 						<div class="control-group">
 							<label for="bgColor">Background Color:</label>
 							<div class="color-input-group">
-								<input
-									type="color"
-									id="bgColor"
-									value="#0d1117" />
+								<input type="color" id="bgColor" value="#0d1117" />
 								<span class="color-value">#0d1117</span>
 							</div>
 						</div>
@@ -125,14 +102,10 @@
 									id="projectLogo"
 									accept="image/*"
 									class="file-input" />
-								<label
-									for="projectLogo"
-									class="file-input-label">
+								<label for="projectLogo" class="file-input-label">
 									<i class="fas fa-upload"></i> Choose File
 								</label>
-								<span
-									class="file-name"
-									id="projectLogoFileName"
+								<span class="file-name" id="projectLogoFileName"
 									>No file chosen</span
 								>
 							</div>
@@ -146,19 +119,11 @@
 									id="bgImage"
 									accept="image/*"
 									class="file-input" />
-								<label
-									for="bgImage"
-									class="file-input-label">
+								<label for="bgImage" class="file-input-label">
 									<i class="fas fa-upload"></i> Choose File
 								</label>
-								<span
-									class="file-name"
-									id="bgImageFileName"
-									>No file chosen</span
-								>
-								<button
-									id="removeBgImage"
-									class="small-button">
+								<span class="file-name" id="bgImageFileName">No file chosen</span>
+								<button id="removeBgImage" class="small-button">
 									<i class="fas fa-trash"></i> Remove
 								</button>
 							</div>
@@ -166,14 +131,10 @@
 					</div>
 
 					<div class="control-section actions">
-						<button
-							id="generateCard"
-							class="primary-button">
+						<button id="generateCard" class="primary-button">
 							<i class="fas fa-sync-alt"></i> Update Card
 						</button>
-						<button
-							id="downloadCard"
-							class="download-button">
+						<button id="downloadCard" class="download-button">
 							<i class="fas fa-download"></i> Download as PNG
 						</button>
 					</div>
@@ -182,9 +143,7 @@
 				<div class="preview">
 					<h2><i class="fas fa-eye"></i> Preview</h2>
 					<div id="cardContainer">
-						<div
-							id="githubCard"
-							class="card">
+						<div id="githubCard" class="card">
 							<div class="card-header">
 								<div class="repo-info">
 									<img
@@ -203,15 +162,11 @@
 								</div>
 							</div>
 							<div class="card-body">
-								<p
-									id="displayDescription"
-									class="project-description"></p>
+								<p id="displayDescription" class="project-description"></p>
 							</div>
 							<div class="card-footer">
 								<h2 id="displayProjectName">Project Name</h2>
-								<div
-									id="logoContainer"
-									class="logo-container">
+								<div id="logoContainer" class="logo-container">
 									<!-- Project logo will be inserted here -->
 								</div>
 							</div>
@@ -235,11 +190,7 @@
 					<h4>Links</h4>
 					<ul>
 						<li>
-							<a
-								href="/"
-								class="footer-link"
-								><i class="fas fa-home"></i> Home</a
-							>
+							<a href="/" class="footer-link"><i class="fas fa-home"></i> Home</a>
 						</li>
 						<li>
 							<a
@@ -284,11 +235,7 @@
 				<p>
 					&copy; <span id="current-year">2023</span> GitHub Project Card Generator |
 					Developed by
-					<a
-						href="https://github.com/sandovaldavid"
-						target="_blank"
-						>@sandovaldavid</a
-					>
+					<a href="https://github.com/sandovaldavid" target="_blank">@sandovaldavid</a>
 				</p>
 			</div>
 		</footer>
