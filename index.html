@@ -11,89 +11,171 @@
 			rel="icon"
 			href="/static/images/logo-github-card-generator.webp" />
 		<link rel="stylesheet" href="/static/styles/style.css" />
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
 		<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 	</head>
 	<body>
 		<div class="container">
-			<h1>GitHub Project Card Generator</h1>
+			<header class="app-header">
+				<div class="logo-container">
+					<img
+						src="/static/images/logo-github-card-generator.webp"
+						alt="Logo"
+						class="app-logo" />
+					<h1>GitHub Project Card Generator</h1>
+				</div>
+			</header>
 
 			<div class="generator">
 				<div class="controls">
-					<h2>Card Settings</h2>
-
-					<div class="control-group">
-						<label for="username">GitHub Username:</label>
-						<input
-							type="text"
-							id="username"
-							placeholder="Enter your GitHub username" />
-						<button id="loadProfile">Load Profile</button>
+					<div class="control-section">
+						<h2><i class="fas fa-user"></i> GitHub Profile</h2>
+						<div class="control-group">
+							<label for="username">GitHub Username:</label>
+							<div class="input-with-button">
+								<input
+									type="text"
+									id="username"
+									placeholder="Enter your GitHub username" />
+								<button id="loadProfile" class="action-button">
+									<i class="fas fa-download"></i> Load
+								</button>
+							</div>
+						</div>
 					</div>
 
-					<div class="control-group">
-						<label for="repoName">Repository Name:</label>
-						<input
-							type="text"
-							id="repoName"
-							placeholder="Enter repository name" />
+					<div class="control-section">
+						<h2>
+							<i class="fas fa-project-diagram"></i> Project
+							Information
+						</h2>
+						<div class="control-group">
+							<label for="repoName">Repository Name:</label>
+							<input
+								type="text"
+								id="repoName"
+								placeholder="Enter repository name" />
+						</div>
+
+						<div class="control-group">
+							<label for="projectName">Project Name:</label>
+							<input
+								type="text"
+								id="projectName"
+								placeholder="Enter project name" />
+						</div>
+
+						<div class="control-group">
+							<label for="projectDescription"
+								>Project Description (Optional):</label
+							>
+							<textarea
+								id="projectDescription"
+								placeholder="Enter project description"
+								rows="4"></textarea>
+						</div>
 					</div>
 
-					<div class="control-group">
-						<label for="projectName">Project Name:</label>
-						<input
-							type="text"
-							id="projectName"
-							placeholder="Enter project name" />
+					<div class="control-section">
+						<h2>
+							<i class="fas fa-palette"></i> Style Customization
+						</h2>
+						<div class="control-group">
+							<label for="projectColor"
+								>Project Name Color:</label
+							>
+							<div class="color-input-group">
+								<input
+									type="color"
+									id="projectColor"
+									value="#ffffff" />
+								<span class="color-value">#ffffff</span>
+							</div>
+						</div>
+
+						<div class="control-group">
+							<label for="borderColor"
+								>Bottom Border Color:</label
+							>
+							<div class="color-input-group">
+								<input
+									type="color"
+									id="borderColor"
+									value="#00a0ff" />
+								<span class="color-value">#00a0ff</span>
+							</div>
+						</div>
+
+						<div class="control-group">
+							<label for="bgColor">Background Color:</label>
+							<div class="color-input-group">
+								<input
+									type="color"
+									id="bgColor"
+									value="#0d1117" />
+								<span class="color-value">#0d1117</span>
+							</div>
+						</div>
 					</div>
 
-					<div class="control-group">
-						<label for="projectDescription"
-							>Project Description (Optional):</label
-						>
-						<textarea
-							id="projectDescription"
-							placeholder="Enter project description"
-							rows="4"></textarea>
+					<div class="control-section">
+						<h2><i class="fas fa-image"></i> Images</h2>
+						<div class="control-group">
+							<label for="projectLogo">Project Logo:</label>
+							<div class="file-input-group">
+								<input
+									type="file"
+									id="projectLogo"
+									accept="image/*"
+									class="file-input" />
+								<label
+									for="projectLogo"
+									class="file-input-label">
+									<i class="fas fa-upload"></i> Choose File
+								</label>
+								<span class="file-name" id="projectLogoFileName"
+									>No file chosen</span
+								>
+							</div>
+						</div>
+
+						<div class="control-group">
+							<label for="bgImage"
+								>Background Image (Optional):</label
+							>
+							<div class="file-input-group">
+								<input
+									type="file"
+									id="bgImage"
+									accept="image/*"
+									class="file-input" />
+								<label for="bgImage" class="file-input-label">
+									<i class="fas fa-upload"></i> Choose File
+								</label>
+								<span class="file-name" id="bgImageFileName"
+									>No file chosen</span
+								>
+								<button id="removeBgImage" class="small-button">
+									<i class="fas fa-trash"></i> Remove
+								</button>
+							</div>
+						</div>
 					</div>
 
-					<div class="control-group">
-						<label for="projectColor">Project Name Color:</label>
-						<input type="color" id="projectColor" value="#ffffff" />
-					</div>
-
-					<div class="control-group">
-						<label for="borderColor">Bottom Border Color:</label>
-						<input type="color" id="borderColor" value="#00a0ff" />
-					</div>
-
-					<div class="control-group">
-						<label for="projectLogo">Project Logo:</label>
-						<input type="file" id="projectLogo" accept="image/*" />
-					</div>
-
-					<div class="control-group">
-						<label for="bgColor">Background Color:</label>
-						<input type="color" id="bgColor" value="#0d1117" />
-					</div>
-
-					<div class="control-group">
-						<label for="bgImage"
-							>Background Image (Optional):</label
-						>
-						<input type="file" id="bgImage" accept="image/*" />
-						<button id="removeBgImage" class="small-button">
-							Remove Image
+					<div class="control-section actions">
+						<button id="generateCard" class="primary-button">
+							<i class="fas fa-sync-alt"></i> Update Card
 						</button>
-					</div>
-
-					<div class="control-group">
-						<button id="generateCard">Update Card</button>
-						<button id="downloadCard">Download as PNG</button>
+						<button id="downloadCard" class="download-button">
+							<i class="fas fa-download"></i> Download as PNG
+						</button>
 					</div>
 				</div>
 
 				<div class="preview">
-					<h2>Preview</h2>
+					<h2><i class="fas fa-eye"></i> Preview</h2>
 					<div id="cardContainer">
 						<div id="githubCard" class="card">
 							<div class="card-header">
