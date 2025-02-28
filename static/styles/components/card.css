@@ -1,0 +1,218 @@
+:root {
+	--bg-overlay-opacity: 0.6;
+}
+
+/* Contenedor de la tarjeta */
+#cardContainer {
+	position: relative;
+	background-color: #f0f0f0;
+	border-radius: 12px;
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+	overflow: hidden;
+	height: 0;
+	padding-bottom: 50%;
+	width: 100%;
+	border-bottom: 2rem solid var(--border-color);
+}
+
+#cardContainer::after {
+	content: '1280 × 640 px';
+	position: absolute;
+	bottom: 10px;
+	right: 10px;
+	font-size: 12px;
+	color: #666;
+	background-color: rgba(255, 255, 255, 0.7);
+	padding: 2px 6px;
+	border-radius: 4px;
+	pointer-events: none;
+	z-index: 10;
+}
+
+/* Estilos de la tarjeta */
+.card {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	padding: 25px;
+	background-color: var(--bg-color);
+	overflow: hidden;
+	color: white;
+	display: flex;
+	flex-direction: column;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+	font-family: 'Roboto', sans-serif;
+	background-position: center;
+	background-size: auto;
+	background-repeat: no-repeat;
+	transform-origin: center;
+}
+
+/* Overlay para imágenes de fondo */
+.has-bg-image::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, var(--bg-overlay-opacity));
+	z-index: 1;
+	pointer-events: none;
+}
+
+/* Asegurar que los elementos estén por encima del overlay */
+.card-header,
+.card-body,
+.card-footer {
+	position: relative;
+	z-index: 2;
+}
+
+/* Cabecera de la tarjeta */
+.card-header {
+	padding: 20px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	height: 80px;
+	min-height: 80px;
+	font-family: var(--primary-font);
+}
+
+/* Información de repositorio y usuario */
+.repo-info,
+.user-info {
+	display: flex;
+	align-items: center;
+}
+
+.github-logo {
+	width: 30px;
+	height: 30px;
+	margin-right: 10px;
+	border-radius: 50%;
+}
+
+#displayRepoName {
+	font-size: 1.5rem;
+	font-weight: 600;
+}
+
+.user-info {
+	display: flex;
+	align-items: center;
+}
+
+#displayUsername {
+	font-size: 1.2rem;
+	margin-right: 10px;
+	font-weight: bold;
+}
+
+.profile-pic {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+}
+
+/* Cuerpo de la tarjeta */
+.card-body {
+	flex-grow: 1;
+	padding: 20px;
+	display: flex;
+	align-items: center;
+	overflow-y: auto;
+	min-height: 100px;
+}
+
+/* Pie de la tarjeta */
+.card-footer {
+	position: relative;
+	height: auto;
+	min-height: 120px;
+	padding-bottom: 80px;
+	padding-left: 20px;
+	display: block;
+	margin-top: auto;
+}
+
+/* Nombre del proyecto */
+#displayProjectName {
+	font-size: 2.5rem;
+	font-weight: bold;
+	font-family: var(--primary-font);
+	width: 100%;
+	margin-bottom: 10px;
+	text-align: left;
+}
+
+/* Descripción del proyecto */
+.project-description {
+	font-size: 1.2rem;
+	line-height: 1.5;
+	color: #c9d1d9;
+	max-width: 80%;
+	margin: 0 auto;
+	text-align: justify;
+	opacity: 0.9;
+	font-family: var(--primary-font);
+}
+
+/* Logo del proyecto */
+.project-logo {
+	width: auto;
+	height: 3rem;
+	object-fit: cover;
+	border-radius: 5px;
+	margin-bottom: 0;
+}
+
+/* Contenedor de logo */
+.card-footer .logo-container {
+	position: absolute;
+	bottom: 20px;
+	right: 20px;
+	max-height: 8rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Estilos responsivos */
+@media (max-width: 1350px) {
+	#cardContainer {
+		padding-bottom: 50%;
+	}
+}
+
+@media (max-width: 1100px), (max-width: 900px), (max-width: 768px) {
+	.card {
+		transform: none;
+		margin-right: 0;
+		margin-bottom: 0;
+	}
+}
+
+/* Ajustes para dispositivos móviles */
+@media (max-width: 480px) {
+	.card-header {
+		padding: 15px;
+		height: 60px;
+	}
+
+	#displayProjectName {
+		font-size: 1.8rem;
+	}
+
+	.card-footer {
+		min-height: 100px;
+		padding-bottom: 60px;
+	}
+
+	.project-logo {
+		height: 2.5rem;
+	}
+}
