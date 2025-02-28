@@ -4,6 +4,7 @@
 @import '/static/styles/components/footer.css';
 @import '/static/styles/components/header.css';
 @import '/static/styles/components/notifications.css';
+@import '/static/styles/components/app-layout.css';
 
 /* Variables globales */
 :root {
@@ -40,7 +41,7 @@ body {
 
 /* Contenedor principal */
 .container {
-	max-width: 1200px;
+	max-width: 95vw;
 	margin: 0 auto;
 	padding: 20px;
 }
