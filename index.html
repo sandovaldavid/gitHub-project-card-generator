@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>GitHub Project Card Generator</title>
+		<link rel="stylesheet" href="/static/styles/style.css" />
+		<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+	</head>
+	<body>
+		<div class="container">
+			<h1>GitHub Project Card Generator</h1>
+
+			<div class="generator">
+				<div class="controls">
+					<h2>Card Settings</h2>
+
+					<div class="control-group">
+						<label for="username">GitHub Username:</label>
+						<input
+							type="text"
+							id="username"
+							placeholder="Enter your GitHub username" />
+						<button id="loadProfile">Load Profile</button>
+					</div>
+
+					<div class="control-group">
+						<label for="repoName">Repository Name:</label>
+						<input
+							type="text"
+							id="repoName"
+							placeholder="Enter repository name" />
+					</div>
+
+					<div class="control-group">
+						<label for="projectName">Project Name:</label>
+						<input
+							type="text"
+							id="projectName"
+							placeholder="Enter project name" />
+					</div>
+
+					<div class="control-group">
+						<label for="projectColor">Project Name Color:</label>
+						<input type="color" id="projectColor" value="#ffffff" />
+					</div>
+
+					<div class="control-group">
+						<label for="borderColor">Bottom Border Color:</label>
+						<input type="color" id="borderColor" value="#00a0ff" />
+					</div>
+
+					<div class="control-group">
+						<label for="projectLogo">Project Logo:</label>
+						<input type="file" id="projectLogo" accept="image/*" />
+					</div>
+
+					<div class="control-group">
+						<label for="bgColor">Background Color:</label>
+						<input type="color" id="bgColor" value="#0d1117" />
+					</div>
+
+					<div class="control-group">
+						<button id="generateCard">Update Card</button>
+						<button id="downloadCard">Download as PNG</button>
+					</div>
+				</div>
+
+				<div class="preview">
+					<h2>Preview</h2>
+					<div id="cardContainer">
+						<div id="githubCard" class="card">
+							<div class="card-header">
+								<div class="repo-info">
+									<img
+										src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+										alt="GitHub Logo"
+										class="github-logo" />
+									<span id="displayRepoName"
+										>/repository-name</span
+									>
+								</div>
+								<div class="user-info">
+									<span id="displayUsername">username</span>
+									<img
+										id="profilePic"
+										src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+										alt="Profile Picture"
+										class="profile-pic" />
+								</div>
+							</div>
+							<div class="card-body">
+								<!-- Empty for custom background -->
+							</div>
+							<div class="card-footer">
+								<h2 id="displayProjectName">Project Name</h2>
+								<div id="logoContainer" class="logo-container">
+									<!-- Project logo will be inserted here -->
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script src="/static/js/index.js"></script>
+	</body>
+</html>
