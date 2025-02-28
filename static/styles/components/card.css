@@ -1,3 +1,7 @@
+:root {
+	--bg-overlay-opacity: 0.6;
+}
+
 /* Contenedor de la tarjeta */
 #cardContainer {
 	position: relative;
@@ -8,7 +12,7 @@
 	height: 0;
 	padding-bottom: 50%;
 	width: 100%;
-	border-bottom: 1rem solid var(--border-color);
+	border-bottom: 2rem solid var(--border-color);
 }
 
 #cardContainer::after {
@@ -54,7 +58,7 @@
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background-color: rgba(0, 0, 0, 0.6);
+	background-color: rgba(0, 0, 0, var(--bg-overlay-opacity));
 	z-index: 1;
 	pointer-events: none;
 }
