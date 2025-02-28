@@ -340,7 +340,7 @@ button:hover {
 	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 	font-family: 'Roboto', sans-serif;
 	background-position: center;
-	background-size: cover;
+	background-size: auto;
 	background-repeat: no-repeat;
 	transform-origin: center;
 }
@@ -452,8 +452,8 @@ button:hover {
 }
 
 .project-logo {
-	width: 60px;
-	height: 60px;
+	width: auto;
+	height: 3rem;
 	object-fit: cover;
 	border-radius: 5px;
 	margin-bottom: 0;
