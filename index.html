@@ -7,7 +7,9 @@
 		<link
 			href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
 			rel="stylesheet" />
-		<link rel="icon" href="/static/images/logo-github-card-generator.webp" />
+		<link
+			rel="icon"
+			href="/static/images/logo-github-card-generator.webp" />
 		<link rel="stylesheet" href="/static/styles/style.css" />
 		<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 	</head>
@@ -72,6 +74,16 @@
 					<div class="control-group">
 						<label for="bgColor">Background Color:</label>
 						<input type="color" id="bgColor" value="#0d1117" />
+					</div>
+
+					<div class="control-group">
+						<label for="bgImage"
+							>Background Image (Optional):</label
+						>
+						<input type="file" id="bgImage" accept="image/*" />
+						<button id="removeBgImage" class="small-button">
+							Remove Image
+						</button>
 					</div>
 
 					<div class="control-group">
