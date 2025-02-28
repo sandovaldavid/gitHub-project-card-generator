@@ -1,0 +1,229 @@
+:root {
+	--border-color: #00a0ff;
+	--bg-color: #0d1117;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+		Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+body {
+	background-color: #f5f5f5;
+	color: #333;
+	line-height: 1.6;
+	padding: 20px;
+}
+
+.container {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 20px;
+}
+
+h1 {
+	text-align: center;
+	margin-bottom: 30px;
+	color: #24292e;
+}
+
+h2 {
+	margin-bottom: 20px;
+	color: #24292e;
+}
+
+.generator {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 30px;
+}
+
+.controls {
+	flex: 1;
+	min-width: 300px;
+	background: white;
+	padding: 20px;
+	border-radius: 8px;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.control-group {
+	margin-bottom: 15px;
+}
+
+label {
+	display: block;
+	margin-bottom: 5px;
+	font-weight: 500;
+}
+
+input[type='text'] {
+	width: 100%;
+	padding: 8px;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	margin-bottom: 5px;
+}
+
+input[type='color'] {
+	width: 50px;
+	height: 30px;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+button {
+	background-color: #2ea44f;
+	color: white;
+	border: none;
+	padding: 10px 15px;
+	border-radius: 4px;
+	cursor: pointer;
+	font-weight: 500;
+	transition: background-color 0.2s;
+}
+
+button:hover {
+	background-color: #2c974b;
+}
+
+#loadProfile {
+	margin-top: 5px;
+}
+
+#downloadCard {
+	background-color: #0366d6;
+}
+
+#downloadCard:hover {
+	background-color: #0258b8;
+}
+
+.preview {
+	flex: 2;
+	min-width: 300px;
+	display: flex;
+	flex-direction: column;
+}
+
+#cardContainer {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background-color: #f0f0f0;
+	padding: 20px;
+	border-radius: 8px;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+	overflow: auto;
+}
+
+/* Card Styles */
+.card {
+	width: 100%;
+	max-width: 1280px;
+	aspect-ratio: 2 / 1;
+	background-color: var(--bg-color);
+	border-radius: 8px;
+	overflow: hidden;
+	color: white;
+	display: flex;
+	flex-direction: column;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.card-header {
+	padding: 20px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	height: 80px;
+}
+
+.repo-info,
+.user-info {
+	display: flex;
+	align-items: center;
+}
+
+.github-logo {
+	width: 40px;
+	height: 40px;
+	margin-right: 10px;
+	border-radius: 50%;
+}
+
+.card-header {
+	font-family: monospace;
+}
+
+#displayRepoName {
+	font-size: 2rem;
+	font-weight: 600;
+}
+
+.user-info {
+	display: flex;
+	align-items: center;
+}
+
+#displayUsername {
+	font-size: 1.5rem;
+	margin-right: 10px;
+	font-weight: bold;
+}
+
+.profile-pic {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+}
+
+.card-body {
+	flex-grow: 1;
+}
+
+.card-footer {
+	font-family: monospace;
+	height: 100px;
+	padding: 20px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	border-bottom: 2rem solid var(--border-color);
+}
+
+#displayProjectName {
+	font-size: 2.5rem;
+	font-weight: bold;
+	margin-bottom: 80px;
+}
+
+.logo-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin-right: 20px;
+}
+
+.project-logo {
+	width: 50px;
+	height: 50px;
+	object-fit: cover;
+	border-radius: 5px;
+	margin-bottom: 20px;
+}
+
+@media (max-width: 1000px) {
+	.generator {
+		flex-direction: column;
+	}
+
+	.preview {
+		width: 100%;
+		min-width: auto;
+	}
+}
