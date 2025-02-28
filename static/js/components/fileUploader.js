@@ -1,6 +1,11 @@
 import { validateImageFile } from '../../utils/validators.js';
-import { createElement, clearElement, applyStyles, updateClassList } from '../../utils/domUtils.js';
-
+import {
+	createElement,
+	clearElement,
+	applyStyles,
+	updateClassList,
+	setCSSVariables,
+} from '../../utils/domUtils.js';
 /**
  * Clase responsable de gestionar la carga de archivos para la aplicación
  * Maneja la carga del logo del proyecto y la imagen de fondo
@@ -38,6 +43,14 @@ export class FileUploader {
 	init() {
 		this.setupEventListeners();
 		this.setupOpacityControl();
+		if (
+			this.elements.card &&
+			this.elements.card.style.backgroundImage &&
+			this.elements.card.style.backgroundImage !== 'none'
+		) {
+			this.state.hasBackgroundImage = true;
+		}
+
 		this.updateOpacityControlVisibility();
 	}
 
@@ -327,6 +340,8 @@ export class FileUploader {
 						dataUrl: e.target.result,
 					});
 
+					this.updateOpacityControlVisibility();
+
 					resolve({
 						file: file,
 						dataUrl: e.target.result,
@@ -341,7 +356,6 @@ export class FileUploader {
 			};
 
 			reader.readAsDataURL(file);
-			this.updateOpacityControlVisibility();
 		});
 	}
 
