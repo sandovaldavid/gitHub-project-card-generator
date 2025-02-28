@@ -193,16 +193,14 @@ document.addEventListener('DOMContentLoaded', function () {
 			displayUsername.textContent = usernameInput.value.trim();
 		}
 
-		// Ensure BG color is applied correctly
-		if (!githubCard.classList.contains('has-bg-image')) {
-			document.documentElement.style.setProperty(
-				'--bg-color',
-				bgColorInput.value
-			);
-		}
+		// Let the card fill its container naturally
+		githubCard.style.width = '100%';
+		githubCard.style.height = '100%';
 
-		githubCard.style.width = '1280px';
-		githubCard.style.height = '640px';
+		// Verificar si hay elemento de usuario y asegurarse de que sea visible
+		if (displayUsername) {
+			displayUsername.style.display = 'block';
+		}
 	}
 
 	window.addEventListener('resize', function () {
