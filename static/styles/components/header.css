@@ -1,0 +1,94 @@
+/* Contenedor principal del header */
+.app-header {
+	display: flex;
+	justify-content: center;
+	margin: 30px 0;
+}
+
+/* Contenedor del logo */
+.logo-container {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+}
+
+/* Estilos del logo de la aplicación */
+.app-logo {
+	width: 50px;
+	height: 50px;
+	border-radius: 10px;
+	margin-right: 1rem;
+	transition: transform 0.3s ease;
+}
+
+.app-logo:hover {
+	transform: rotate(5deg);
+}
+
+/* Estilos de títulos dentro del header */
+h1 {
+	color: var(--dark-gray);
+	font-weight: 700;
+}
+
+h2 {
+	margin-bottom: 20px;
+	color: var(--dark-gray);
+	font-weight: 600;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+/* Contenedor principal del generador */
+.generator {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 30px;
+}
+
+/* Sección de previsualización */
+.preview {
+	flex: 2;
+	min-width: 300px;
+	display: flex;
+	flex-direction: column;
+}
+
+/* Media queries para adaptación responsive del header */
+@media (max-width: 768px) {
+	.app-header {
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+		margin: 20px 0;
+	}
+
+	.logo-container {
+		justify-content: center;
+		margin-bottom: 15px;
+	}
+
+	h1 {
+		font-size: 1.8rem;
+	}
+
+	h2 {
+		font-size: 1.4rem;
+	}
+}
+
+@media (max-width: 480px) {
+	.app-header {
+		margin: 15px 0;
+	}
+
+	.app-logo {
+		width: 40px;
+		height: 40px;
+	}
+
+	h1 {
+		font-size: 1.6rem;
+	}
+}
