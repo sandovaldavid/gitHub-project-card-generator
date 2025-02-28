@@ -17,8 +17,8 @@
     <img src="static/images/logo-github-card-generator.webp" alt="GitHub Card Generator Logo" width="100">
 </div>
 
-
-Una herramienta web para generar atractivas tarjetas de presentación para tus proyectos de GitHub. Personaliza, previsualiza y descarga tarjetas en formato PNG con facilidad.
+Una herramienta web para generar atractivas tarjetas de presentación para tus proyectos de GitHub.
+Personaliza, previsualiza y descarga tarjetas en formato PNG con facilidad.
 
 ## ✨ Demo
 
@@ -28,26 +28,26 @@ Una herramienta web para generar atractivas tarjetas de presentación para tus p
 
 ## 🚀 Características
 
-- **Personalización completa** de colores, texto e imágenes
-- **Carga automática** de información de perfil de GitHub
-- **Vista previa en tiempo real** mientras editas
-- **Descarga en formato PNG** de alta calidad (1280x640px)
-- **Diseño responsivo** funcional en dispositivos móviles y de escritorio
-- **Interfaz intuitiva** y fácil de usar
+-   **Personalización completa** de colores, texto e imágenes
+-   **Carga automática** de información de perfil de GitHub
+-   **Vista previa en tiempo real** mientras editas
+-   **Descarga en formato PNG** de alta calidad (1280x640px)
+-   **Diseño responsivo** funcional en dispositivos móviles y de escritorio
+-   **Interfaz intuitiva** y fácil de usar
 
 ## 💻 Tecnologías utilizadas
 
-- HTML5
-- CSS3
-- JavaScript (ES6+)
-- [html2canvas](https://html2canvas.hertzen.com/) - Para convertir el HTML a imagen
-- [Font Awesome](https://fontawesome.com/) - Para los iconos de interfaz
-- [Google Fonts](https://fonts.google.com/) - Fuentes web Roboto
+-   HTML5
+-   CSS3
+-   JavaScript (ES6+)
+-   [html2canvas](https://html2canvas.hertzen.com/) - Para convertir el HTML a imagen
+-   [Font Awesome](https://fontawesome.com/) - Para los iconos de interfaz
+-   [Google Fonts](https://fonts.google.com/) - Fuentes web Roboto
 
 ## 📋 Prerrequisitos
 
-- Navegador web moderno (Chrome, Firefox, Edge, Safari)
-- Conexión a internet para cargar perfiles de GitHub
+-   Navegador web moderno (Chrome, Firefox, Edge, Safari)
+-   Conexión a internet para cargar perfiles de GitHub
 
 ## 🔧 Instalación y configuración local
 
@@ -76,30 +76,36 @@ npx serve
 ## 📘 Cómo usar
 
 1. **Información de GitHub**
-   - Introduce tu nombre de usuario de GitHub y haz clic en "Load" para cargar automáticamente tu imagen de perfil.
+
+    - Introduce tu nombre de usuario de GitHub y haz clic en "Load" para cargar automáticamente tu
+      imagen de perfil.
 
 2. **Información del proyecto**
-   - Añade el nombre del repositorio, nombre del proyecto y una descripción.
+
+    - Añade el nombre del repositorio, nombre del proyecto y una descripción.
 
 3. **Personalización**
-   - Selecciona colores para el nombre del proyecto, borde inferior y fondo.
-   - Sube el logo de tu proyecto (opcional).
-   - Añade una imagen de fondo personalizada (opcional).
+
+    - Selecciona colores para el nombre del proyecto, borde inferior y fondo.
+    - Sube el logo de tu proyecto (opcional).
+    - Añade una imagen de fondo personalizada (opcional).
 
 4. **Previsualización**
-   - Verifica cómo se ve tu tarjeta en la sección de vista previa.
-   - Haz clic en "Update Card" para aplicar los cambios.
+
+    - Verifica cómo se ve tu tarjeta en la sección de vista previa.
+    - Haz clic en "Update Card" para aplicar los cambios.
 
 5. **Descarga**
-   - Haz clic en "Download as PNG" para guardar tu tarjeta como imagen.
+    - Haz clic en "Download as PNG" para guardar tu tarjeta como imagen.
 
 ## 🎨 Personalización
 
-La tarjeta tiene dimensiones de 1280x640px, con un área visible de relación 2:1. Las opciones de personalización incluyen:
+La tarjeta tiene dimensiones de 1280x640px, con un área visible de relación 2:1. Las opciones de
+personalización incluyen:
 
-- **Colores**: Fondo, borde inferior y texto del nombre del proyecto
-- **Imágenes**: Logo del proyecto y fondo personalizado
-- **Texto**: Nombre de usuario, nombre del repositorio, nombre del proyecto y descripción
+-   **Colores**: Fondo, borde inferior y texto del nombre del proyecto
+-   **Imágenes**: Logo del proyecto y fondo personalizado
+-   **Texto**: Nombre de usuario, nombre del repositorio, nombre del proyecto y descripción
 
 ## 🌐 Despliegue
 
@@ -145,14 +151,14 @@ Este proyecto está licenciado bajo la Licencia MIT - consulta el archivo LICENS
 
 **Tu Nombre**
 
-* GitHub: [@tuUsuario](https://github.com/tuUsuario)
-* LinkedIn: [@tuPerfil](https://linkedin.com/in/tuPerfil)
+-   GitHub: [@tuUsuario](https://github.com/tuUsuario)
+-   LinkedIn: [@tuPerfil](https://linkedin.com/in/tuPerfil)
 
 ## 📌 Notas adicionales
 
-- La aplicación utiliza la API pública de GitHub para cargar información del perfil
-- Las imágenes se procesan localmente sin subirse a ningún servidor
-- Asegúrate de tener una conexión a internet estable al cargar perfiles de GitHub
+-   La aplicación utiliza la API pública de GitHub para cargar información del perfil
+-   Las imágenes se procesan localmente sin subirse a ningún servidor
+-   Asegúrate de tener una conexión a internet estable al cargar perfiles de GitHub
 
 ---
 
