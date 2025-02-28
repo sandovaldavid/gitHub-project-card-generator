@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', function () {
 	const borderColorInput = document.getElementById('borderColor');
 	const projectLogoInput = document.getElementById('projectLogo');
 	const bgColorInput = document.getElementById('bgColor');
+	const bgImageInput = document.getElementById('bgImage');
+	const removeBgImageBtn = document.getElementById('removeBgImage');
 	const generateCardBtn = document.getElementById('generateCard');
 	const downloadCardBtn = document.getElementById('downloadCard');
 
@@ -21,6 +23,31 @@ document.addEventListener('DOMContentLoaded', function () {
 	const displayDescription = document.getElementById('displayDescription');
 	const logoContainer = document.getElementById('logoContainer');
 	const githubCard = document.getElementById('githubCard');
+
+	// Manejador para la imagen de fondo
+	bgImageInput.addEventListener('change', function (e) {
+		if (e.target.files && e.target.files[0]) {
+			const reader = new FileReader();
+
+			reader.onload = function (event) {
+				githubCard.style.backgroundImage = `url(${event.target.result})`;
+				githubCard.style.backgroundSize = 'cover';
+				githubCard.style.backgroundPosition = 'center';
+
+				// Al subir una imagen, aplicamos un ligero oscurecimiento para mejorar legibilidad
+				githubCard.classList.add('has-bg-image');
+			};
+
+			reader.readAsDataURL(e.target.files[0]);
+		}
+	});
+
+	// Botón para eliminar la imagen de fondo
+	removeBgImageBtn.addEventListener('click', function () {
+		githubCard.style.backgroundImage = 'none';
+		githubCard.classList.remove('has-bg-image');
+		bgImageInput.value = ''; // Resetear el input file
+	});
 
 	// Load GitHub profile
 	loadProfileBtn.addEventListener('click', function () {
@@ -93,6 +120,13 @@ document.addEventListener('DOMContentLoaded', function () {
 			displayUsername.textContent === 'username'
 		) {
 			displayUsername.textContent = usernameInput.value.trim();
+		}
+
+		if (!githubCard.classList.contains('has-bg-image')) {
+			document.documentElement.style.setProperty(
+				'--bg-color',
+				bgColorInput.value
+			);
 		}
 	}
 
