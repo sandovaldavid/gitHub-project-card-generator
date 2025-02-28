@@ -44,8 +44,9 @@ body {
 
 .logo-container {
 	display: flex;
+	justify-content: center;
 	align-items: center;
-	gap: 15px;
+	margin-right: 0;
 }
 
 .app-logo {
@@ -393,18 +394,14 @@ button:hover {
 }
 
 .github-logo {
-	width: 40px;
-	height: 40px;
+	width: 30px;
+	height: 30px;
 	margin-right: 10px;
 	border-radius: 50%;
 }
 
-.card-header {
-	font-family: monospace;
-}
-
 #displayRepoName {
-	font-size: 2rem;
+	font-size: 1.5rem;
 	font-weight: 600;
 }
 
@@ -414,7 +411,7 @@ button:hover {
 }
 
 #displayUsername {
-	font-size: 1.5rem;
+	font-size: 1.2rem;
 	margin-right: 10px;
 	font-weight: bold;
 }
@@ -435,37 +432,29 @@ button:hover {
 }
 
 .card-footer {
-	height: 100px;
-	min-height: 100px;
+	height: auto;
+	min-height: 80px;
 	padding: 20px;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	border-bottom: 2rem solid var(--border-color);
+	border-bottom: 1rem solid var(--border-color);
 	margin-top: auto;
 }
 
 #displayProjectName {
 	font-size: 2.5rem;
 	font-weight: bold;
-	margin-bottom: 80px;
 	font-family: var(--primary-font);
-	margin-bottom: 30%;
-}
-
-.logo-container {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	margin-right: 20px;
+	margin-bottom: 0;
 }
 
 .project-logo {
-	width: 50px;
-	height: 50px;
+	width: 60px;
+	height: 60px;
 	object-fit: cover;
 	border-radius: 5px;
-	margin-bottom: 20px;
+	margin-bottom: 0;
 }
 
 /* Project Description */
@@ -504,49 +493,32 @@ textarea {
 	}
 
 	.card {
-		transform: scale(0.8);
-		margin-right: 20%; /* Compensar por la escala */
-		margin-bottom: 10%;
+		transform: none;
+		margin-right: 0;
+		margin-bottom: 0;
 	}
 }
 
 @media (max-width: 1100px) {
 	.card {
-		transform: scale(0.6);
-		margin-right: 40%;
-		margin-bottom: 20%;
+		transform: none;
+		margin-right: 0;
+		margin-bottom: 0;
 	}
 }
 
 @media (max-width: 900px) {
 	.card {
-		transform: scale(0.5);
-		margin-right: 50%;
-		margin-bottom: 25%;
+		transform: none;
+		margin-right: 0;
+		margin-bottom: 0;
 	}
 }
 
 @media (max-width: 768px) {
-	.generator {
-		flex-direction: column;
-	}
-
-	.preview {
-		width: 100%;
-		min-width: auto;
-	}
-
-	.actions {
-		flex-direction: column;
-	}
-
-	#cardContainer {
-		padding-bottom: 50%;
-	}
-
 	.card {
-		transform: scale(0.4);
-		margin-right: 60%;
-		margin-bottom: 30%;
+		transform: none;
+		margin-right: 0;
+		margin-bottom: 0;
 	}
 }
