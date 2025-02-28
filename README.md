@@ -1,4 +1,4 @@
-# GitHub Project Card Generator
+# GitHub Project Card Generator: GitCardX
 
 <div align="center">
 
@@ -12,9 +12,11 @@
 
 </div>
 
-<p align="center">
-  <img src="static/images/logo-github-card-generator.webp" alt="GitHub Card Generator Logo" width="100">
-</p>
+<div align="center">
+  <h1>GitCardX</h1>
+    <img src="static/images/logo-github-card-generator.webp" alt="GitHub Card Generator Logo" width="100">
+</div>
+
 
 Una herramienta web para generar atractivas tarjetas de presentación para tus proyectos de GitHub. Personaliza, previsualiza y descarga tarjetas en formato PNG con facilidad.
 
