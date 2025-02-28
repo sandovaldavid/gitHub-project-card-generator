@@ -193,12 +193,25 @@ document.addEventListener('DOMContentLoaded', function () {
 			displayUsername.textContent = usernameInput.value.trim();
 		}
 
+		// Ensure BG color is applied correctly
 		if (!githubCard.classList.contains('has-bg-image')) {
 			document.documentElement.style.setProperty(
 				'--bg-color',
 				bgColorInput.value
 			);
 		}
+
+		githubCard.style.width = '1280px';
+		githubCard.style.height = '640px';
+	}
+
+	window.addEventListener('resize', function () {
+		adjustCardScale();
+	});
+
+	function adjustCardScale() {
+		const cardContainer = document.getElementById('cardContainer');
+		const card = document.getElementById('githubCard');
 	}
 
 	// Handle project logo upload
@@ -386,4 +399,5 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     `;
 	document.head.appendChild(style);
+	adjustCardScale();
 });
