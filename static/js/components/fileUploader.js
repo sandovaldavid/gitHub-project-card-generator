@@ -1,10 +1,5 @@
 import { validateImageFile } from '../../utils/validators.js';
-import {
-	createElement,
-	clearElement,
-	applyStyles,
-	updateClassList,
-} from '../../utils/domUtils.js';
+import { createElement, clearElement, applyStyles, updateClassList } from '../../utils/domUtils.js';
 
 /**
  * Clase responsable de gestionar la carga de archivos para la aplicación
@@ -42,6 +37,8 @@ export class FileUploader {
 	 */
 	init() {
 		this.setupEventListeners();
+		this.setupOpacityControl();
+		this.updateOpacityControlVisibility();
 	}
 
 	/**
@@ -344,6 +341,7 @@ export class FileUploader {
 			};
 
 			reader.readAsDataURL(file);
+			this.updateOpacityControlVisibility();
 		});
 	}
 
@@ -382,6 +380,7 @@ export class FileUploader {
 
 		// Disparar evento personalizado
 		this.dispatchFileEvent('backgroundimageremoved');
+		this.updateOpacityControlVisibility();
 	}
 
 	/**
@@ -621,5 +620,57 @@ export class FileUploader {
 		this.state.backgroundImage = null;
 		this.state.hasProjectLogo = false;
 		this.state.hasBackgroundImage = false;
+	}
+
+	/**
+	 * Configura el control de opacidad para imágenes de fondo
+	 */
+	setupOpacityControl() {
+		const opacitySlider = document.getElementById('bgOpacity');
+		const opacityValue = document.querySelector('.opacity-value');
+
+		if (!opacitySlider || !opacityValue) return;
+
+		// Inicializar con el valor actual
+		const initialOpacity = getComputedStyle(document.documentElement)
+			.getPropertyValue('--bg-overlay-opacity')
+			.trim();
+
+		const initialValue = Math.round(parseFloat(initialOpacity) * 100);
+		opacitySlider.value = initialValue;
+		opacityValue.textContent = `${initialValue}%`;
+
+		// Evento de cambio
+		opacitySlider.addEventListener('input', (e) => {
+			const value = e.target.value;
+			opacityValue.textContent = `${value}%`;
+
+			// Actualizar la variable CSS
+			setCSSVariables({
+				'--bg-overlay-opacity': value / 100,
+			});
+
+			// Guardar el valor en el estado
+			this.state.backgroundOpacity = value / 100;
+
+			// Disparar evento personalizado
+			this.dispatchFileEvent('backgroundopacity', {
+				value: value / 100,
+			});
+		});
+	}
+
+	/**
+	 * Actualiza la visibilidad del control de opacidad
+	 */
+	updateOpacityControlVisibility() {
+		const opacityGroup = document.querySelector('.bg-opacity-group');
+		if (!opacityGroup) return;
+
+		if (this.state.hasBackgroundImage) {
+			opacityGroup.style.display = 'block';
+		} else {
+			opacityGroup.style.display = 'none';
+		}
 	}
 }
