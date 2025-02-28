@@ -222,6 +222,8 @@ document.addEventListener('DOMContentLoaded', function () {
 	// Download card as PNG
 	downloadCardBtn.addEventListener('click', function () {
 		const card = document.getElementById('githubCard');
+		const cardContainer = document.getElementById('cardContainer');
+		const cardWrapper = document.createElement('div');
 
 		// Cambiar texto del botón
 		const oldText = downloadCardBtn.innerHTML;
@@ -229,28 +231,79 @@ document.addEventListener('DOMContentLoaded', function () {
 			'<i class="fas fa-spinner fa-spin"></i> Generating...';
 		downloadCardBtn.disabled = true;
 
-		html2canvas(card, {
-			scale: 2,
-			backgroundColor: null,
-			logging: false,
-		})
-			.then((canvas) => {
-				const link = document.createElement('a');
-				link.download = 'github-project-card.png';
-				link.href = canvas.toDataURL('image/png');
-				link.click();
+		// Clonar la tarjeta para manipularla sin afectar la original
+		const cardClone = card.cloneNode(true);
 
-				// Restaurar texto del botón
-				downloadCardBtn.innerHTML = oldText;
-				downloadCardBtn.disabled = false;
+		// Estilos para el contenedor temporal
+		cardWrapper.style.position = 'fixed';
+		cardWrapper.style.top = '-9999px';
+		cardWrapper.style.left = '-9999px';
+		cardWrapper.style.width = '1280px'; // Ancho exacto
+		cardWrapper.style.height = '640px'; // Alto exacto
+		cardWrapper.style.overflow = 'hidden';
+		cardWrapper.style.zIndex = '-1';
 
-				showNotification('Card downloaded successfully', 'success');
+		// Configurar el clon con dimensiones exactas
+		cardClone.style.width = '100%';
+		cardClone.style.height = '100%';
+		cardClone.style.maxWidth = 'none';
+		cardClone.style.margin = '0';
+		cardClone.style.padding = '0';
+		cardClone.style.boxShadow = 'none';
+
+		// Mantener los estilos de fondo, bordes, etc.
+		cardClone.style.backgroundColor =
+			getComputedStyle(card).backgroundColor;
+		cardClone.style.backgroundImage =
+			getComputedStyle(card).backgroundImage;
+		cardClone.style.backgroundSize = getComputedStyle(card).backgroundSize;
+		cardClone.style.backgroundPosition =
+			getComputedStyle(card).backgroundPosition;
+
+		// Agregar el clon al contenedor y el contenedor al body
+		cardWrapper.appendChild(cardClone);
+		document.body.appendChild(cardWrapper);
+
+		// Capturar la imagen después de un pequeño retraso
+		setTimeout(() => {
+			html2canvas(cardClone, {
+				scale: 1,
+				backgroundColor: null,
+				logging: false,
+				useCORS: true,
+				allowTaint: true,
+				width: 1280,
+				height: 640,
 			})
-			.catch((error) => {
-				downloadCardBtn.innerHTML = oldText;
-				downloadCardBtn.disabled = false;
-				showNotification('Error generating image', 'error');
-			});
+				.then((canvas) => {
+					// Descargar la imagen
+					const link = document.createElement('a');
+					link.download = 'github-project-card.png';
+					link.href = canvas.toDataURL('image/png');
+					link.click();
+
+					// Limpiar: eliminar el clon
+					document.body.removeChild(cardWrapper);
+
+					// Restaurar texto del botón
+					downloadCardBtn.innerHTML = oldText;
+					downloadCardBtn.disabled = false;
+					showNotification('Card downloaded successfully', 'success');
+				})
+				.catch((error) => {
+					// Limpiar en caso de error
+					if (document.body.contains(cardWrapper)) {
+						document.body.removeChild(cardWrapper);
+					}
+
+					downloadCardBtn.innerHTML = oldText;
+					downloadCardBtn.disabled = false;
+					showNotification(
+						'Error generating image: ' + error.message,
+						'error'
+					);
+				});
+		}, 100);
 	});
 
 	// Función para mostrar notificaciones
