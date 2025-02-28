@@ -231,6 +231,8 @@ document.addEventListener('DOMContentLoaded', function () {
 	});
 
 	// Download card as PNG
+
+	// Reemplaza el evento de descarga actual con esta versión mejorada
 	downloadCardBtn.addEventListener('click', function () {
 		const card = document.getElementById('githubCard');
 		const cardContainer = document.getElementById('cardContainer');
@@ -261,6 +263,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		cardClone.style.margin = '0';
 		cardClone.style.padding = '0';
 		cardClone.style.boxShadow = 'none';
+		cardClone.style.position = 'relative';
 
 		// Mantener los estilos de fondo, bordes, etc.
 		cardClone.style.backgroundColor =
@@ -270,6 +273,67 @@ document.addEventListener('DOMContentLoaded', function () {
 		cardClone.style.backgroundSize = getComputedStyle(card).backgroundSize;
 		cardClone.style.backgroundPosition =
 			getComputedStyle(card).backgroundPosition;
+
+		// AUMENTAR TAMAÑOS: Modificar tamaños de texto y elementos en el clon
+
+		const cloneRepoName = cardClone.querySelector('#displayRepoName');
+		if (cloneRepoName) {
+			cloneRepoName.style.fontSize = '2.5rem';
+		}
+
+		const cloneUsername = cardClone.querySelector('#displayUsername');
+		if (cloneUsername) {
+			cloneUsername.style.fontSize = '2rem';
+		}
+
+		const cloneProjectName = cardClone.querySelector('#displayProjectName');
+		if (cloneProjectName) {
+			cloneProjectName.style.fontSize = '4rem';
+		}
+
+		const cloneDescription = cardClone.querySelector('#displayDescription');
+		if (cloneDescription) {
+			cloneDescription.style.fontSize = '2rem';
+			cloneDescription.style.lineHeight = '1.6';
+		}
+
+		const cloneGithubLogo = cardClone.querySelector('.github-logo');
+		if (cloneGithubLogo) {
+			cloneGithubLogo.style.width = '60px';
+			cloneGithubLogo.style.height = '60px';
+			cloneGithubLogo.style.marginRight = '20px';
+		}
+
+		const cloneProfilePic = cardClone.querySelector('.profile-pic');
+		if (cloneProfilePic) {
+			cloneProfilePic.style.width = '80px';
+			cloneProfilePic.style.height = '80px';
+		}
+
+		const cloneProjectLogo = cardClone.querySelector('.project-logo');
+		if (cloneProjectLogo) {
+			cloneProjectLogo.style.width = '120px';
+			cloneProjectLogo.style.height = '120px';
+			cloneProjectLogo.style.borderRadius = '10px';
+		}
+
+		const cloneHeader = cardClone.querySelector('.card-header');
+		if (cloneHeader) {
+			cloneHeader.style.padding = '40px';
+			cloneHeader.style.height = '160px';
+		}
+
+		const cloneFooter = cardClone.querySelector('.card-footer');
+		if (cloneFooter) {
+			cloneFooter.style.padding = '40px';
+			cloneFooter.style.minHeight = '160px';
+			cloneFooter.style.borderBottomWidth = '2rem';
+		}
+
+		const cloneBody = cardClone.querySelector('.card-body');
+		if (cloneBody) {
+			cloneBody.style.padding = '40px';
+		}
 
 		// Agregar el clon al contenedor y el contenedor al body
 		cardWrapper.appendChild(cardClone);
@@ -314,7 +378,7 @@ document.addEventListener('DOMContentLoaded', function () {
 						'error'
 					);
 				});
-		}, 100);
+		}, 200); // Aumentado a 200ms para dar más tiempo a la renderización
 	});
 
 	// Función para mostrar notificaciones
