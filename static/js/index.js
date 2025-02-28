@@ -7,10 +7,15 @@ document.addEventListener('DOMContentLoaded', function () {
 	const projectDescriptionInput =
 		document.getElementById('projectDescription');
 	const projectColorInput = document.getElementById('projectColor');
+	const projectColorValue = document.querySelector('.color-value');
 	const borderColorInput = document.getElementById('borderColor');
-	const projectLogoInput = document.getElementById('projectLogo');
+	const borderColorValue = borderColorInput.nextElementSibling;
 	const bgColorInput = document.getElementById('bgColor');
+	const bgColorValue = bgColorInput.nextElementSibling;
+	const projectLogoInput = document.getElementById('projectLogo');
+	const projectLogoFileName = document.getElementById('projectLogoFileName');
 	const bgImageInput = document.getElementById('bgImage');
+	const bgImageFileName = document.getElementById('bgImageFileName');
 	const removeBgImageBtn = document.getElementById('removeBgImage');
 	const generateCardBtn = document.getElementById('generateCard');
 	const downloadCardBtn = document.getElementById('downloadCard');
@@ -23,6 +28,36 @@ document.addEventListener('DOMContentLoaded', function () {
 	const displayDescription = document.getElementById('displayDescription');
 	const logoContainer = document.getElementById('logoContainer');
 	const githubCard = document.getElementById('githubCard');
+
+	// Actualizar valores de color
+	function updateColorValue(input, display) {
+		display.textContent = input.value;
+	}
+
+	projectColorInput.addEventListener('input', () => {
+		updateColorValue(projectColorInput, projectColorValue);
+	});
+
+	borderColorInput.addEventListener('input', () => {
+		updateColorValue(borderColorInput, borderColorValue);
+	});
+
+	bgColorInput.addEventListener('input', () => {
+		updateColorValue(bgColorInput, bgColorValue);
+	});
+
+	// Mostrar nombre de archivo seleccionado
+	projectLogoInput.addEventListener('change', function () {
+		projectLogoFileName.textContent = this.files[0]
+			? this.files[0].name
+			: 'No file chosen';
+	});
+
+	bgImageInput.addEventListener('change', function () {
+		bgImageFileName.textContent = this.files[0]
+			? this.files[0].name
+			: 'No file chosen';
+	});
 
 	// Manejador para la imagen de fondo
 	bgImageInput.addEventListener('change', function (e) {
@@ -47,12 +82,18 @@ document.addEventListener('DOMContentLoaded', function () {
 		githubCard.style.backgroundImage = 'none';
 		githubCard.classList.remove('has-bg-image');
 		bgImageInput.value = ''; // Resetear el input file
+		bgImageFileName.textContent = 'No file chosen';
 	});
 
 	// Load GitHub profile
 	loadProfileBtn.addEventListener('click', function () {
 		const username = usernameInput.value.trim();
 		if (username) {
+			// Mostrar indicador de carga
+			loadProfileBtn.innerHTML =
+				'<i class="fas fa-spinner fa-spin"></i> Loading...';
+			loadProfileBtn.disabled = true;
+
 			fetch(`https://api.github.com/users/${username}`)
 				.then((response) => {
 					if (!response.ok) {
@@ -63,17 +104,48 @@ document.addEventListener('DOMContentLoaded', function () {
 				.then((data) => {
 					profilePic.src = data.avatar_url;
 					displayUsername.textContent = username;
+
+					// Restablecer botón
+					loadProfileBtn.innerHTML =
+						'<i class="fas fa-download"></i> Load';
+					loadProfileBtn.disabled = false;
+
+					// Mostrar notificación de éxito
+					showNotification('Profile loaded successfully', 'success');
 				})
 				.catch((error) => {
-					alert('Error loading GitHub profile: ' + error.message);
+					// Restablecer botón
+					loadProfileBtn.innerHTML =
+						'<i class="fas fa-download"></i> Load';
+					loadProfileBtn.disabled = false;
+
+					// Mostrar notificación de error
+					showNotification('Error: ' + error.message, 'error');
 				});
 		} else {
-			alert('Please enter a GitHub username');
+			showNotification('Please enter a GitHub username', 'warning');
 		}
 	});
 
+	// Inicializar valores de color
+	updateColorValue(projectColorInput, projectColorValue);
+	updateColorValue(borderColorInput, borderColorValue);
+	updateColorValue(bgColorInput, bgColorValue);
+
 	// Update card based on inputs
-	generateCardBtn.addEventListener('click', updateCard);
+	generateCardBtn.addEventListener('click', function () {
+		const oldText = generateCardBtn.innerHTML;
+		generateCardBtn.innerHTML =
+			'<i class="fas fa-spinner fa-spin"></i> Updating...';
+		generateCardBtn.disabled = true;
+
+		setTimeout(() => {
+			updateCard();
+			generateCardBtn.innerHTML = oldText;
+			generateCardBtn.disabled = false;
+			showNotification('Card updated successfully', 'success');
+		}, 500);
+	});
 
 	// Initial card update
 	updateCard();
@@ -95,7 +167,6 @@ document.addEventListener('DOMContentLoaded', function () {
 		displayDescription.textContent = description;
 
 		// Adjust card layout based on whether there's a description
-		// En lugar de ocultar el elemento, ocultamos solo el texto
 		if (description) {
 			displayDescription.style.display = 'block';
 		} else {
@@ -152,15 +223,114 @@ document.addEventListener('DOMContentLoaded', function () {
 	downloadCardBtn.addEventListener('click', function () {
 		const card = document.getElementById('githubCard');
 
+		// Cambiar texto del botón
+		const oldText = downloadCardBtn.innerHTML;
+		downloadCardBtn.innerHTML =
+			'<i class="fas fa-spinner fa-spin"></i> Generating...';
+		downloadCardBtn.disabled = true;
+
 		html2canvas(card, {
 			scale: 2,
 			backgroundColor: null,
 			logging: false,
-		}).then((canvas) => {
-			const link = document.createElement('a');
-			link.download = 'github-project-card.png';
-			link.href = canvas.toDataURL('image/png');
-			link.click();
-		});
+		})
+			.then((canvas) => {
+				const link = document.createElement('a');
+				link.download = 'github-project-card.png';
+				link.href = canvas.toDataURL('image/png');
+				link.click();
+
+				// Restaurar texto del botón
+				downloadCardBtn.innerHTML = oldText;
+				downloadCardBtn.disabled = false;
+
+				showNotification('Card downloaded successfully', 'success');
+			})
+			.catch((error) => {
+				downloadCardBtn.innerHTML = oldText;
+				downloadCardBtn.disabled = false;
+				showNotification('Error generating image', 'error');
+			});
 	});
+
+	// Función para mostrar notificaciones
+	function showNotification(message, type) {
+		// Eliminar notificaciones anteriores
+		const oldNotification = document.querySelector('.notification');
+		if (oldNotification) {
+			oldNotification.remove();
+		}
+
+		const notification = document.createElement('div');
+		notification.className = `notification ${type}`;
+
+		let icon = '';
+		switch (type) {
+			case 'success':
+				icon = '<i class="fas fa-check-circle"></i>';
+				break;
+			case 'error':
+				icon = '<i class="fas fa-exclamation-circle"></i>';
+				break;
+			case 'warning':
+				icon = '<i class="fas fa-exclamation-triangle"></i>';
+				break;
+		}
+
+		notification.innerHTML = `${icon} ${message}`;
+		document.body.appendChild(notification);
+
+		// Aparecer con animación
+		setTimeout(() => {
+			notification.classList.add('show');
+		}, 10);
+
+		// Desaparecer después de 3 segundos
+		setTimeout(() => {
+			notification.classList.remove('show');
+			setTimeout(() => {
+				notification.remove();
+			}, 300);
+		}, 3000);
+	}
+
+	// Añadir CSS para notificaciones
+	const style = document.createElement('style');
+	style.textContent = `
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .notification.success {
+            background-color: #2ecc71;
+        }
+        
+        .notification.error {
+            background-color: #e74c3c;
+        }
+        
+        .notification.warning {
+            background-color: #f39c12;
+        }
+    `;
+	document.head.appendChild(style);
 });
