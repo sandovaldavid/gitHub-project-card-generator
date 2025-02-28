@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', function () {
 	const loadProfileBtn = document.getElementById('loadProfile');
 	const repoNameInput = document.getElementById('repoName');
 	const projectNameInput = document.getElementById('projectName');
+	const projectDescriptionInput =
+		document.getElementById('projectDescription');
 	const projectColorInput = document.getElementById('projectColor');
 	const borderColorInput = document.getElementById('borderColor');
 	const projectLogoInput = document.getElementById('projectLogo');
@@ -16,6 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	const profilePic = document.getElementById('profilePic');
 	const displayRepoName = document.getElementById('displayRepoName');
 	const displayProjectName = document.getElementById('displayProjectName');
+	const displayDescription = document.getElementById('displayDescription');
 	const logoContainer = document.getElementById('logoContainer');
 	const githubCard = document.getElementById('githubCard');
 
@@ -59,6 +62,18 @@ document.addEventListener('DOMContentLoaded', function () {
 		const projectName = projectNameInput.value.trim();
 		displayProjectName.textContent = projectName || 'Project Name';
 		displayProjectName.style.color = projectColorInput.value;
+
+		// Update project description (optional)
+		const description = projectDescriptionInput.value.trim();
+		displayDescription.textContent = description;
+
+		// Adjust card layout based on whether there's a description
+		const cardBody = document.querySelector('.card-body');
+		if (description) {
+			cardBody.style.display = 'flex';
+		} else {
+			cardBody.style.display = 'none';
+		}
 
 		// Update border color
 		document.documentElement.style.setProperty(
