@@ -220,7 +220,83 @@
 				</div>
 			</div>
 		</div>
-		
+
+		<footer class="app-footer">
+			<div class="footer-content">
+				<div class="footer-logo">
+					<img
+						src="./static/images/logo-github-card-generator.webp"
+						alt="Logo"
+						class="footer-logo-img" />
+					<h3>GitHub Project Card Generator</h3>
+				</div>
+
+				<div class="footer-links">
+					<h4>Links</h4>
+					<ul>
+						<li>
+							<a
+								href="/"
+								class="footer-link"
+								><i class="fas fa-home"></i> Home</a
+							>
+						</li>
+						<li>
+							<a
+								href="https://github.com/sandovaldavid/gitHub-project-card-generator"
+								target="_blank"
+								class="footer-link"
+								><i class="fas fa-code"></i> Source Code</a
+							>
+						</li>
+					</ul>
+				</div>
+
+				<div class="footer-social">
+					<h4>Connect</h4>
+					<div class="social-icons">
+						<a
+							href="https://github.com/sandovaldavid"
+							class="social-icon"
+							target="_blank"
+							title="GitHub"
+							><i class="fab fa-github"></i
+						></a>
+						<a
+							href="https://x.com/XDavid2S"
+							class="social-icon"
+							target="_blank"
+							title="Twitter"
+							><i class="fab fa-twitter"></i
+						></a>
+						<a
+							href="https://www.linkedin.com/in/jdavidsandovals/"
+							class="social-icon"
+							target="_blank"
+							title="LinkedIn"
+							><i class="fab fa-linkedin"></i
+						></a>
+					</div>
+				</div>
+			</div>
+
+			<div class="footer-bottom">
+				<p>
+					&copy; <span id="current-year">2023</span> GitHub Project Card Generator |
+					Developed by
+					<a
+						href="https://github.com/sandovaldavid"
+						target="_blank"
+						>@sandovaldavid</a
+					>
+				</p>
+			</div>
+		</footer>
+
+		<script>
+			document.getElementById('current-year').textContent = new Date().getFullYear();
+		</script>
+
 		<script src="./static/js/index.js"></script>
 	</body>
 </html>
