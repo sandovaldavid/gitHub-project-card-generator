@@ -136,7 +136,43 @@ button:hover {
 	flex-direction: column;
 	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 	position: relative;
-	font-family: var(--primary-font);
+	font-family: 'Roboto', sans-serif;
+	background-position: center;
+	background-size: cover;
+	background-repeat: no-repeat;
+}
+
+.has-bg-image::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.6);
+	z-index: 1;
+	pointer-events: none;
+}
+
+.card-header,
+.card-body,
+.card-footer {
+	position: relative;
+	z-index: 2;
+}
+
+/* styles to remove button imagen */
+.small-button {
+	background-color: #e74c3c;
+	color: white;
+	padding: 5px 10px;
+	font-size: 0.8rem;
+	margin-top: 5px;
+	display: inline-block;
+}
+
+.small-button:hover {
+	background-color: #c0392b;
 }
 
 .card-header {
