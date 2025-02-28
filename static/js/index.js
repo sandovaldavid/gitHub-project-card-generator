@@ -47,10 +47,25 @@ document.addEventListener('DOMContentLoaded', function () {
 	});
 
 	// Mostrar nombre de archivo seleccionado
-	projectLogoInput.addEventListener('change', function () {
-		projectLogoFileName.textContent = this.files[0]
-			? this.files[0].name
-			: 'No file chosen';
+	projectLogoInput.addEventListener('change', function (e) {
+		if (e.target.files && e.target.files[0]) {
+			const reader = new FileReader();
+
+			reader.onload = function (event) {
+				logoContainer.innerHTML = '';
+				const img = document.createElement('img');
+				img.src = event.target.result;
+				img.alt = 'Project Logo';
+				img.className = 'project-logo';
+
+				logoContainer.appendChild(img);
+
+				// Actualizar nombre del archivo
+				projectLogoFileName.textContent = e.target.files[0].name;
+			};
+
+			reader.readAsDataURL(e.target.files[0]);
+		}
 	});
 
 	bgImageInput.addEventListener('change', function () {
@@ -215,27 +230,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		const card = document.getElementById('githubCard');
 	}
 
-	// Handle project logo upload
-	projectLogoInput.addEventListener('change', function (e) {
-		if (e.target.files && e.target.files[0]) {
-			const reader = new FileReader();
-
-			reader.onload = function (event) {
-				logoContainer.innerHTML = '';
-				const img = document.createElement('img');
-				img.src = event.target.result;
-				img.alt = 'Project Logo';
-				img.className = 'project-logo';
-				logoContainer.appendChild(img);
-			};
-
-			reader.readAsDataURL(e.target.files[0]);
-		}
-	});
-
 	// Download card as PNG
-
-	// Reemplaza el evento de descarga actual con esta versión mejorada
 	downloadCardBtn.addEventListener('click', function () {
 		const card = document.getElementById('githubCard');
 		const cardContainer = document.getElementById('cardContainer');
@@ -247,10 +242,6 @@ document.addEventListener('DOMContentLoaded', function () {
 			'<i class="fas fa-spinner fa-spin"></i> Generating...';
 		downloadCardBtn.disabled = true;
 
-		// Clonar la tarjeta para manipularla sin afectar la original
-		const cardClone = card.cloneNode(true);
-
-		// Estilos para el contenedor temporal
 		cardWrapper.style.position = 'fixed';
 		cardWrapper.style.top = '-9999px';
 		cardWrapper.style.left = '-9999px';
@@ -259,25 +250,18 @@ document.addEventListener('DOMContentLoaded', function () {
 		cardWrapper.style.overflow = 'hidden';
 		cardWrapper.style.zIndex = '-1';
 		cardWrapper.style.boxSizing = 'border-box';
-		cardWrapper.style.borderBottom = `3rem solid ${getComputedStyle(
+		cardWrapper.style.backgroundColor = getComputedStyle(
 			document.documentElement
-		)
+		).getPropertyValue('--bg-color');
+
+		const borderColor = getComputedStyle(document.documentElement)
 			.getPropertyValue('--border-color')
-			.trim()}`;
-		cardWrapper.style.backgroundColor = 'var(--bg-color)';
+			.trim();
+		cardWrapper.style.borderBottom = `3rem solid ${borderColor}`;
 
-		cardClone.style.width = '100%';
-		cardClone.style.height = 'calc(100% - 2rem)';
-		cardClone.style.maxWidth = 'none';
-		cardClone.style.margin = '0';
-		cardClone.style.padding = '0';
-		cardClone.style.boxShadow = 'none';
-		cardClone.style.position = 'relative';
+		// Clonar la tarjeta para manipularla sin afectar la original
+		const cardClone = card.cloneNode(true);
 
-		// Obtener todos los estilos computados originales para aplicarlos al clon
-		const originalStyles = window.getComputedStyle(card);
-
-		// Configurar el clon con dimensiones exactas pero manteniendo estilos originales
 		cardClone.style.width = '100%';
 		cardClone.style.height = '100%';
 		cardClone.style.maxWidth = 'none';
@@ -285,15 +269,49 @@ document.addEventListener('DOMContentLoaded', function () {
 		cardClone.style.padding = '40pt 40pt 0 40pt';
 		cardClone.style.boxShadow = 'none';
 		cardClone.style.position = 'relative';
+
+		const originalStyles = window.getComputedStyle(card);
 		cardClone.style.backgroundColor = originalStyles.backgroundColor;
-		cardClone.style.backgroundImage = originalStyles.backgroundImage;
-		cardClone.style.backgroundSize = originalStyles.backgroundSize;
-		cardClone.style.backgroundPosition = originalStyles.backgroundPosition;
+
+		if (originalStyles.backgroundImage !== 'none') {
+			cardClone.style.backgroundImage = originalStyles.backgroundImage;
+			cardClone.style.backgroundSize = 'cover';
+			cardClone.style.backgroundPosition = 'center';
+			cardClone.style.backgroundRepeat = 'no-repeat';
+
+			if (card.classList.contains('has-bg-image')) {
+				cardClone.classList.add('has-bg-image');
+
+				const tempStyle = document.createElement('style');
+				tempStyle.textContent = `
+                .temp-download-card.has-bg-image::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-color: rgba(0, 0, 0, 0.6);
+                    z-index: 1;
+                    pointer-events: none;
+                }
+            `;
+				document.head.appendChild(tempStyle);
+				cardClone.classList.add('temp-download-card');
+			}
+		}
+
+		const cloneHeader = cardClone.querySelector('.card-header');
+		const cloneBody = cardClone.querySelector('.card-body');
+		const cloneFooter = cardClone.querySelector('.card-footer');
+
+		if (cloneHeader) cloneHeader.style.zIndex = '2';
+		if (cloneBody) cloneBody.style.zIndex = '2';
+		if (cloneFooter) cloneFooter.style.zIndex = '2';
 
 		const scaleFactor = 1.5;
 
 		const originalHeader = card.querySelector('.card-header');
-		const cloneHeader = cardClone.querySelector('.card-header');
 		const headerStyles = window.getComputedStyle(originalHeader);
 		cloneHeader.style.padding = `${
 			parseInt(headerStyles.paddingTop) * scaleFactor
@@ -303,7 +321,6 @@ document.addEventListener('DOMContentLoaded', function () {
 		}px`;
 
 		const originalFooter = card.querySelector('.card-footer');
-		const cloneFooter = cardClone.querySelector('.card-footer');
 		const footerStyles = window.getComputedStyle(originalFooter);
 		cloneFooter.style.paddingLeft = `${
 			parseInt(footerStyles.paddingLeft) * scaleFactor
@@ -322,7 +339,6 @@ document.addEventListener('DOMContentLoaded', function () {
 		);
 
 		const originalBody = card.querySelector('.card-body');
-		const cloneBody = cardClone.querySelector('.card-body');
 		const bodyStyles = window.getComputedStyle(originalBody);
 		cloneBody.style.padding = `${
 			parseInt(bodyStyles.padding) * scaleFactor
@@ -364,11 +380,15 @@ document.addEventListener('DOMContentLoaded', function () {
 				height: 60,
 				marginRight: 20,
 			},
-			profilePic: { selector: '.profile-pic', width: 80, height: 80 },
+			profilePic: {
+				selector: '.profile-pic',
+				width: 80,
+				height: 80,
+			},
 			projectLogo: {
 				selector: '.project-logo',
-				width: 120,
-				height: 120,
+				width: 'auto',
+				height: '6rem',
 				borderRadius: 10,
 			},
 		};
@@ -376,8 +396,20 @@ document.addEventListener('DOMContentLoaded', function () {
 		for (const [key, config] of Object.entries(images)) {
 			const cloneImage = cardClone.querySelector(config.selector);
 			if (cloneImage) {
-				cloneImage.style.width = `${config.width}px`;
-				cloneImage.style.height = `${config.height}px`;
+				if (config.width === 'auto') {
+					cloneImage.style.width = 'auto';
+				} else {
+					cloneImage.style.width = `${config.width}px`;
+				}
+
+				if (
+					typeof config.height === 'string' &&
+					config.height.includes('rem')
+				) {
+					cloneImage.style.height = config.height;
+				} else {
+					cloneImage.style.height = `${config.height}px`;
+				}
 
 				if (config.marginRight) {
 					cloneImage.style.marginRight = `${config.marginRight}px`;
@@ -394,6 +426,11 @@ document.addEventListener('DOMContentLoaded', function () {
 			cloneLogoContainer.style.position = 'absolute';
 			cloneLogoContainer.style.bottom = '30px';
 			cloneLogoContainer.style.right = '40px';
+			cloneLogoContainer.style.zIndex = '2';
+			cloneLogoContainer.style.maxHeight = '8rem';
+			cloneLogoContainer.style.display = 'flex';
+			cloneLogoContainer.style.alignItems = 'center';
+			cloneLogoContainer.style.justifyContent = 'center';
 		}
 
 		// Agregar el clon al contenedor y el contenedor al body
@@ -405,41 +442,44 @@ document.addEventListener('DOMContentLoaded', function () {
 			html2canvas(cardWrapper, {
 				scale: 1,
 				backgroundColor: null,
-				logging: false,
+				logging: true,
 				useCORS: true,
 				allowTaint: true,
 				width: 1280,
 				height: 640,
+				onclone: function (clonedDoc) {
+					const clonedWrapper =
+						clonedDoc.querySelector('[style*="fixed"]');
+					if (clonedWrapper) {
+						clonedWrapper.style.borderBottom = `3rem solid ${borderColor}`;
+					}
+				},
 			})
 				.then((canvas) => {
-					// Descargar la imagen
 					const link = document.createElement('a');
 					link.download = 'github-project-card.png';
 					link.href = canvas.toDataURL('image/png');
 					link.click();
 
-					// Limpiar: eliminar el clon
+					// Limpiar
 					document.body.removeChild(cardWrapper);
+					if (
+						document.head.querySelector(
+							'style[class*="temp-download-card"]'
+						)
+					) {
+						document.head.removeChild(tempStyle);
+					}
 
-					// Restaurar texto del botón
 					downloadCardBtn.innerHTML = oldText;
 					downloadCardBtn.disabled = false;
 					showNotification('Card downloaded successfully', 'success');
 				})
 				.catch((error) => {
-					// Limpiar en caso de error
-					if (document.body.contains(cardWrapper)) {
-						document.body.removeChild(cardWrapper);
-					}
-
-					downloadCardBtn.innerHTML = oldText;
-					downloadCardBtn.disabled = false;
-					showNotification(
-						'Error generating image: ' + error.message,
-						'error'
-					);
+					console.error(error);
+					showNotification('Error downloading card', 'error');
 				});
-		}, 300); // Tiempo de espera aumentado para asegurar la renderización completa
+		}, 500);
 	});
 
 	// Función para mostrar notificaciones
