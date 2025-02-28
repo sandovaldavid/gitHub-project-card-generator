@@ -1,10 +1,6 @@
 import { CONSTANTS } from '../config.js';
 import { sanitizeText } from '../../utils/validators.js';
-import {
-	createElement,
-	addStylesheet,
-	updateClassList,
-} from '../../utils/domUtils.js';
+import { createElement, addStylesheet, updateClassList } from '../../utils/domUtils.js';
 
 /**
  * Sistema de notificaciones para toda la aplicación
@@ -35,124 +31,12 @@ export class NotificationSystem {
 	 * Inicializa los estilos CSS para las notificaciones
 	 */
 	initStyles() {
-		// Usar addStylesheet de domUtils para añadir estilos
-		if (document.getElementById('notification-styles')) {
-			return;
+		if (!document.getElementById('notification-styles-check')) {
+			// Solo añadimos un marcador para saber que la inicialización ocurrió
+			const marker = document.createElement('meta');
+			marker.id = 'notification-styles-check';
+			document.head.appendChild(marker);
 		}
-
-		const styleContent = `
-            .notification-container {
-                position: fixed;
-                z-index: 1000;
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                max-width: 100%;
-                pointer-events: none;
-            }
-            
-            .notification-container.top-right {
-                top: 20px;
-                right: 20px;
-                align-items: flex-end;
-            }
-            
-            .notification-container.top-left {
-                top: 20px;
-                left: 20px;
-                align-items: flex-start;
-            }
-            
-            .notification-container.bottom-right {
-                bottom: 20px;
-                right: 20px;
-                align-items: flex-end;
-            }
-            
-            .notification-container.bottom-left {
-                bottom: 20px;
-                left: 20px;
-                align-items: flex-start;
-            }
-            
-            .notification {
-                position: relative;
-                padding: 12px 20px;
-                border-radius: 8px;
-                color: white;
-                font-weight: 500;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                transform: translateX(0);
-                opacity: 0;
-                transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-                max-width: 350px;
-                pointer-events: auto;
-                cursor: pointer;
-            }
-            
-            .notification.fade-in {
-                opacity: 1;
-            }
-            
-            .notification.fade-out {
-                opacity: 0;
-                transform: translateX(100%);
-            }
-            
-            .notification i {
-                font-size: 18px;
-            }
-            
-            .notification.success {
-                background-color: #2ecc71;
-            }
-            
-            .notification.error {
-                background-color: #e74c3c;
-            }
-            
-            .notification.warning {
-                background-color: #f39c12;
-            }
-            
-            .notification.info {
-                background-color: #3498db;
-            }
-            
-            .notification .close-btn {
-                position: absolute;
-                top: 5px;
-                right: 5px;
-                background: transparent;
-                border: none;
-                color: rgba(255,255,255,0.6);
-                font-size: 12px;
-                cursor: pointer;
-                padding: 5px;
-                line-height: 1;
-            }
-            
-            .notification .close-btn:hover {
-                color: white;
-            }
-            
-            .notification .content {
-                flex-grow: 1;
-                word-break: break-word;
-				margin-right: 10px;
-            }
-            
-            @media (max-width: 600px) {
-                .notification {
-                    max-width: 90vw;
-                }
-            }
-        `;
-
-		addStylesheet('notification-styles', styleContent);
 	}
 
 	/**
