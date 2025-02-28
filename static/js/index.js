@@ -201,6 +201,9 @@ document.addEventListener('DOMContentLoaded', function () {
 		if (displayUsername) {
 			displayUsername.style.display = 'block';
 		}
+
+		const cardContainer = document.getElementById('cardContainer');
+		cardContainer.style.borderBottomColor = borderColorInput.value;
 	}
 
 	window.addEventListener('resize', function () {
@@ -251,10 +254,25 @@ document.addEventListener('DOMContentLoaded', function () {
 		cardWrapper.style.position = 'fixed';
 		cardWrapper.style.top = '-9999px';
 		cardWrapper.style.left = '-9999px';
-		cardWrapper.style.width = '1280px'; // Ancho exacto
-		cardWrapper.style.height = '640px'; // Alto exacto
+		cardWrapper.style.width = '1280px';
+		cardWrapper.style.height = '640px';
 		cardWrapper.style.overflow = 'hidden';
 		cardWrapper.style.zIndex = '-1';
+		cardWrapper.style.boxSizing = 'border-box';
+		cardWrapper.style.borderBottom = `3rem solid ${getComputedStyle(
+			document.documentElement
+		)
+			.getPropertyValue('--border-color')
+			.trim()}`;
+		cardWrapper.style.backgroundColor = 'var(--bg-color)';
+
+		cardClone.style.width = '100%';
+		cardClone.style.height = 'calc(100% - 2rem)';
+		cardClone.style.maxWidth = 'none';
+		cardClone.style.margin = '0';
+		cardClone.style.padding = '0';
+		cardClone.style.boxShadow = 'none';
+		cardClone.style.position = 'relative';
 
 		// Obtener todos los estilos computados originales para aplicarlos al clon
 		const originalStyles = window.getComputedStyle(card);
@@ -264,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		cardClone.style.height = '100%';
 		cardClone.style.maxWidth = 'none';
 		cardClone.style.margin = '0';
-		cardClone.style.padding = '40pt';
+		cardClone.style.padding = '40pt 40pt 0 40pt';
 		cardClone.style.boxShadow = 'none';
 		cardClone.style.position = 'relative';
 		cardClone.style.backgroundColor = originalStyles.backgroundColor;
@@ -302,13 +320,6 @@ document.addEventListener('DOMContentLoaded', function () {
 				.getPropertyValue('--border-color')
 				.trim()
 		);
-		cloneFooter.style.borderBottomWidth = `${2 * scaleFactor}rem`;
-		cloneFooter.style.borderBottomStyle = 'solid';
-		cloneFooter.style.borderBottomColor = getComputedStyle(
-			document.documentElement
-		)
-			.getPropertyValue('--border-color')
-			.trim();
 
 		const originalBody = card.querySelector('.card-body');
 		const cloneBody = cardClone.querySelector('.card-body');
@@ -391,7 +402,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		// Capturar la imagen después de un pequeño retraso
 		setTimeout(() => {
-			html2canvas(cardClone, {
+			html2canvas(cardWrapper, {
 				scale: 1,
 				backgroundColor: null,
 				logging: false,
