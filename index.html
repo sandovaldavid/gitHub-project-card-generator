@@ -41,6 +41,16 @@
 					</div>
 
 					<div class="control-group">
+						<label for="projectDescription"
+							>Project Description (Optional):</label
+						>
+						<textarea
+							id="projectDescription"
+							placeholder="Enter project description"
+							rows="4"></textarea>
+					</div>
+
+					<div class="control-group">
 						<label for="projectColor">Project Name Color:</label>
 						<input type="color" id="projectColor" value="#ffffff" />
 					</div>
@@ -90,7 +100,9 @@
 								</div>
 							</div>
 							<div class="card-body">
-								<!-- Empty for custom background -->
+								<p
+									id="displayDescription"
+									class="project-description"></p>
 							</div>
 							<div class="card-footer">
 								<h2 id="displayProjectName">Project Name</h2>
