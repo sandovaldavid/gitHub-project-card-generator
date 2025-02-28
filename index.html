@@ -178,7 +178,7 @@
 
 		<footer class="app-footer">
 			<div class="footer-content">
-				<div class="footer-logo">
+				<div class="footer-logo animate-on-scroll">
 					<img
 						src="./static/images/logo-github-card-generator.webp"
 						alt="Logo"
@@ -186,55 +186,68 @@
 					<h3>GitCardX</h3>
 				</div>
 
-				<div class="footer-links">
+				<div class="footer-links animate-on-scroll">
 					<h4>Links</h4>
 					<ul>
 						<li>
-							<a href="/" class="footer-link"><i class="fas fa-home"></i> Home</a>
+							<a href="/" class="footer-link"> <i class="fas fa-home"></i> Home </a>
 						</li>
 						<li>
 							<a
 								href="https://github.com/sandovaldavid/gitHub-project-card-generator"
 								target="_blank"
-								class="footer-link"
-								><i class="fas fa-code"></i> Source Code</a
-							>
+								class="footer-link">
+								<i class="fas fa-code"></i> Source Code
+							</a>
 						</li>
 					</ul>
 				</div>
 
-				<div class="footer-social">
+				<div class="footer-social animate-on-scroll">
 					<h4>Connect</h4>
 					<div class="social-icons">
 						<a
 							href="https://github.com/sandovaldavid"
 							class="social-icon"
 							target="_blank"
-							title="GitHub"
-							><i class="fab fa-github"></i
-						></a>
+							title="GitHub">
+							<i class="fab fa-github"></i>
+						</a>
 						<a
 							href="https://x.com/XDavid2S"
 							class="social-icon"
 							target="_blank"
-							title="Twitter"
-							><i class="fab fa-twitter"></i
-						></a>
+							title="Twitter">
+							<i class="fab fa-twitter"></i>
+						</a>
 						<a
 							href="https://www.linkedin.com/in/jdavidsandovals/"
 							class="social-icon"
 							target="_blank"
-							title="LinkedIn"
-							><i class="fab fa-linkedin"></i
-						></a>
+							title="LinkedIn">
+							<i class="fab fa-linkedin"></i>
+						</a>
+						<a href="#" class="social-icon" target="_blank" title="Instagram">
+							<i class="fab fa-instagram"></i>
+						</a>
+					</div>
+				</div>
+
+				<div class="footer-newsletter animate-on-scroll">
+					<h4>Newsletter</h4>
+					<p>Receive updates and news from this page</p>
+					<div class="newsletter-form">
+						<input type="email" placeholder="Tu email" class="newsletter-input" />
+						<button class="newsletter-button">
+							<i class="fas fa-paper-plane"></i>
+						</button>
 					</div>
 				</div>
 			</div>
 
 			<div class="footer-bottom">
 				<p>
-					&copy; <span id="current-year">2023</span> GitHub Project Card Generator |
-					Developed by
+					&copy; <span id="current-year">2023</span> GitCardX | by
 					<a href="https://github.com/sandovaldavid" target="_blank">@sandovaldavid</a>
 				</p>
 			</div>
@@ -242,6 +255,27 @@
 
 		<script>
 			document.getElementById('current-year').textContent = new Date().getFullYear();
+
+			// Animate elements on scroll
+			const elementsToAnimate = document.querySelectorAll('.animate-on-scroll');
+
+			const observerOptions = {
+				threshold: 0.1,
+				rootMargin: '0px 0px -50px 0px',
+			};
+
+			const observer = new IntersectionObserver(function (entries, observer) {
+				entries.forEach((entry) => {
+					if (entry.isIntersecting) {
+						entry.target.classList.add('appear');
+						observer.unobserve(entry.target);
+					}
+				});
+			}, observerOptions);
+
+			elementsToAnimate.forEach((element) => {
+				observer.observe(element);
+			});
 		</script>
 
 		<script src="./static/js/index.js"></script>
