@@ -43,6 +43,8 @@ class GitCardXApp {
 			logoContainerSelector: '#logoContainer',
 			cardSelector: '#githubCard',
 		});
+		// Después de cargar una imagen de fondo
+		this.components.fileUploader.updateOpacityControlVisibility();
 	}
 
 	loadSavedPreferences() {
