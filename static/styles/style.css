@@ -306,6 +306,7 @@ button:hover {
 	height: 0;
 	padding-bottom: 50%;
 	width: 100%;
+	border-bottom: 1rem solid var(--border-color);
 }
 
 #cardContainer::after {
@@ -331,7 +332,6 @@ button:hover {
 	height: 100%;
 	padding: 25px;
 	background-color: var(--bg-color);
-	border-radius: 8px;
 	overflow: hidden;
 	color: white;
 	display: flex;
