@@ -149,10 +149,10 @@ Este proyecto está licenciado bajo la Licencia MIT - consulta el archivo LICENS
 
 ## ✍️ Autor
 
-**Tu Nombre**
+**David Sandoval**
 
--   GitHub: [@tuUsuario](https://github.com/tuUsuario)
--   LinkedIn: [@tuPerfil](https://linkedin.com/in/tuPerfil)
+-   GitHub: [@sandovaldavid](https://github.com/sandovaldavid)
+-   LinkedIn: [@devsandoval](https://linkedin.com/in/devsandoval)
 
 ## 📌 Notas adicionales
 
@@ -167,6 +167,6 @@ Este proyecto está licenciado bajo la Licencia MIT - consulta el archivo LICENS
     ¿Te gusta este proyecto? ¡Dale una ⭐️!
   </p>
   <p>
-    © 2023 GitHub Project Card Generator
+    © 2025 GitHub Project Card Generator
   </p>
 </div>
