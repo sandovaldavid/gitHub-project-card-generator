@@ -1,4 +1,4 @@
-/* Estilos globales de la aplicación */
+/* Global application styles */
 @import '/static/styles/components/card.css';
 @import '/static/styles/components/controls.css';
 @import '/static/styles/components/footer.css';
@@ -6,54 +6,81 @@
 @import '/static/styles/components/notifications.css';
 @import '/static/styles/components/app-layout.css';
 
-/* Variables globales */
+/* Global variables - Tech Minimalist Palette */
 :root {
-	--border-color: #00a0ff;
-	--bg-color: #0d1117;
+	/* Primary Colors */
+	--primary-color: #445d7e;
+	--secondary-color: #5a77a1;
+	--accent-color: #3b82f6;
+	--accent-color-hover: #2563eb;
+
+	/* Text Colors */
+	--text-primary: #374151;
+	--text-secondary: #737373;
+
+	/* Background Colors */
+	--bg-light: #f9fafb;
+	--bg-sections: #e2e8f0;
+	--bg-dark: #10192a;
+	--text-light: #f1f5f9;
+
+	/* Card colors - GitHub theme inspired */
+	--border-color: #3b82f6;
+	--bg-color: #10192a;
+
+	/* Typography */
 	--primary-font: 'Roboto', sans-serif;
-	--secondary-font: 'Open Sans', sans-serif;
-	--primary-color: #2ea44f;
-	--primary-color-hover: #2c974b;
-	--secondary-color: #0366d6;
-	--secondary-color-hover: #0258b8;
-	--danger-color: #e74c3c;
-	--danger-color-hover: #c0392b;
-	--light-gray: #f5f5f5;
-	--medium-gray: #ddd;
-	--dark-gray: #24292e;
+	--secondary-font: 'Segoe UI', 'Open Sans', sans-serif;
+
+	/* UI Elements */
+	--danger-color: #ef4444;
+	--danger-color-hover: #dc2626;
+	--success-color: #10b981;
+	--warning-color: #f59e0b;
+	--box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+	--card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+	/* Transitions */
+	--transition-fast: 0.15s ease;
+	--transition-normal: 0.3s ease;
+
+	/* Spacing */
+	--space-xs: 0.25rem;
+	--space-sm: 0.5rem;
+	--space-md: 1rem;
+	--space-lg: 1.5rem;
+	--space-xl: 2rem;
 }
 
-/* Estilos de reseteo global */
+/* Global reset styles */
 * {
 	margin: 0;
 	padding: 0;
 	box-sizing: border-box;
-	font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Oxygen, Ubuntu, Cantarell,
-		'Open Sans', 'Helvetica Neue', sans-serif;
+	font-family: var(--primary-font);
 }
 
-/* Estilos base del cuerpo de la página */
+/* Base body styles */
 body {
-	background-color: var(--light-gray);
-	color: #333;
+	background-color: var(--bg-light);
+	color: var(--text-primary);
 	line-height: 1.6;
+	font-size: 16px;
 }
 
-/* Contenedor principal */
+/* Main container */
 .container {
-	max-width: 95vw;
 	margin: 0 auto;
-	padding: 20px;
 }
 
-/* Layout principal (generador y vista previa) */
+/* Main layout (generator and preview) */
 .generator {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 30px;
 }
 
-/* Animaciones globales */
+/* Global animations */
 .animate-on-scroll {
 	opacity: 0;
 	transform: translateY(30px);
@@ -65,9 +92,141 @@ body {
 	transform: translateY(0);
 }
 
-/* Media queries globales */
+/* Form elements */
+input,
+textarea,
+select {
+	padding: 0.6rem 0.8rem;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	font-size: 0.95rem;
+	background-color: white;
+	color: var(--text-primary);
+	transition: var(--transition-fast);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+	outline: none;
+	border-color: var(--accent-color);
+	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+.form-group {
+	margin-bottom: 1.2rem;
+}
+
+/* Section titles */
+.section-title {
+	font-size: 1.1rem;
+	font-weight: 600;
+	margin-bottom: 1rem;
+	color: var(--primary-color);
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+/* Help Modal Styles */
+.modal {
+	display: none;
+	position: fixed;
+	z-index: 1000;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	background-color: rgba(0, 0, 0, 0.7);
+	opacity: 0;
+	transition: opacity 0.3s ease;
+}
+
+.modal.show {
+	display: block;
+	opacity: 1;
+}
+
+.modal-content {
+	background-color: #1a202c;
+	margin: 5% auto;
+	padding: 25px;
+	border: 1px solid #3b82f6;
+	border-radius: 8px;
+	width: 80%;
+	max-width: 700px;
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+	position: relative;
+	transform: translateY(-20px);
+	transition: transform 0.3s ease;
+}
+
+.modal.show .modal-content {
+	transform: translateY(0);
+}
+
+.help-modal-close {
+	color: #aaa;
+	float: right;
+	font-size: 28px;
+	font-weight: bold;
+	cursor: pointer;
+	transition: color 0.2s;
+}
+
+.help-modal-close:hover {
+	color: #3b82f6;
+}
+
+.help-modal-title {
+	font-size: 24px;
+	color: white;
+	margin-bottom: 10px;
+	border-bottom: 1px solid #3b82f6;
+	padding-bottom: 10px;
+}
+
+.help-modal-subtitle {
+	font-size: 18px;
+	color: #d1d5db;
+	margin-bottom: 15px;
+}
+
+.help-modal-steps {
+	margin: 20px 0;
+}
+
+.help-step {
+	margin-bottom: 15px;
+}
+
+.help-step-title {
+	font-weight: bold;
+	color: #3b82f6;
+	margin-bottom: 5px;
+}
+
+.help-step-content {
+	color: #d1d5db;
+	line-height: 1.5;
+}
+
+.help-modal-footer {
+	color: #9ca3af;
+	font-size: 14px;
+	margin-top: 20px;
+	padding-top: 10px;
+	border-top: 1px solid #374151;
+}
+
+/* Global media queries */
 @media (max-width: 768px) {
 	.generator {
 		flex-direction: column;
+	}
+
+	.container {
+		padding: var(--space-md);
 	}
 }
