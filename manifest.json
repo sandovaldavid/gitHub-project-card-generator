@@ -1,0 +1,45 @@
+{
+	"name": "GitHub Project Card Generator",
+	"short_name": "Card Generator",
+	"description": "Create beautiful project cards for your GitHub repositories",
+	"start_url": "/",
+	"display": "standalone",
+	"background_color": "#10192a",
+	"theme_color": "#3b82f6",
+	"icons": [
+		{
+			"src": "assets/icons/favicon-16x16.png",
+			"sizes": "16x16",
+			"type": "image/png"
+		},
+		{
+			"src": "assets/icons/favicon-32x32.png",
+			"sizes": "32x32",
+			"type": "image/png"
+		},
+		{
+			"src": "assets/icons/apple-touch-icon.png",
+			"sizes": "180x180",
+			"type": "image/png"
+		},
+		{
+			"src": "assets/icons/android-chrome-192x192.png",
+			"sizes": "192x192",
+			"type": "image/png"
+		},
+		{
+			"src": "assets/icons/android-chrome-512x512.png",
+			"sizes": "512x512",
+			"type": "image/png"
+		}
+	],
+	"screenshots": [
+		{
+			"src": "assets/mockup/desktop.png",
+			"sizes": "1280x800",
+			"type": "image/png",
+			"form_factor": "wide",
+			"label": "GitHub Card Generator - Desktop View"
+		}
+	]
+}
