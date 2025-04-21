@@ -9,6 +9,7 @@ import { ExportService } from './services/exportService.js';
 import { StorageService } from './services/storageService.js';
 import { NotificationSystem } from './components/notification.js';
 import { CardManager } from './components/cardManager.js';
+import { ConfirmationModal } from './components/confirmationModal.js';
 import { CONSTANTS } from './config.js';
 
 /**
@@ -77,6 +78,9 @@ function setupEventListeners(app) {
 	const colorPicker = app.getComponent('colorPicker');
 	const fileUploader = app.getComponent('fileUploader');
 	const storageService = app.getService('storage');
+	
+	// Create confirmation modal instance
+	const confirmationModal = new ConfirmationModal();
 
 	// Button to load GitHub profile
 	eventManager.setupDOMEvent('#loadProfile', 'click', async (event) => {
@@ -196,7 +200,14 @@ function setupEventListeners(app) {
 
 	// Reset button in header
 	eventManager.setupDOMEvent('#resetForm', 'click', () => {
-		if (confirm('Are you sure you want to reset all fields?')) {
+		confirmationModal.show({
+			title: 'Reset All Settings',
+			message: 'Are you sure you want to reset all fields? This action cannot be undone.',
+			confirmText: 'Reset',
+			cancelText: 'Cancel',
+			icon: 'sync-alt',
+			confirmButtonClass: 'btn-danger'
+		}, () => {
 			// Reset all components
 			cardManager.reset();
 			colorPicker.resetToDefaults();
@@ -206,7 +217,29 @@ function setupEventListeners(app) {
 			settingsManager.clearSettings();
 
 			notificationSystem.info('All settings have been reset');
-		}
+		});
+	});
+	
+	// Reset button in settings panel
+	eventManager.setupDOMEvent('#resetButton', 'click', () => {
+		confirmationModal.show({
+			title: 'Reset All Settings',
+			message: 'Are you sure you want to reset all fields? This action cannot be undone.',
+			confirmText: 'Reset',
+			cancelText: 'Cancel',
+			icon: 'sync-alt',
+			confirmButtonClass: 'btn-danger'
+		}, () => {
+			// Reset all components
+			cardManager.reset();
+			colorPicker.resetToDefaults();
+			fileUploader.reset();
+
+			// Clear settings
+			settingsManager.clearSettings();
+
+			notificationSystem.info('All settings have been reset');
+		});
 	});
 
 	// Help button
