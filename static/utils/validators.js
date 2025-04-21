@@ -1,5 +1,5 @@
 /**
- * const and functions for validating form data
+ * Constants and functions for validating form data
  */
 const CONFIG = {
 	USERNAME: {
@@ -26,7 +26,7 @@ const CONFIG = {
 };
 
 /**
- * user name validation
+ * GitHub username validation
  * @param {string} username - GitHub username to validate
  * @returns {Object} Result of validation { isValid, message }
  */
@@ -38,12 +38,10 @@ export function validateGitHubUsername(username) {
 		};
 	}
 
-	username = username.trim();
-
 	if (username.length > CONFIG.USERNAME.MAX_LENGTH) {
 		return {
 			isValid: false,
-			message: `Username cannot exceed ${CONFIG.USERNAME.MAX_LENGTH} characters`,
+			message: `Username must be less than ${CONFIG.USERNAME.MAX_LENGTH} characters`,
 		};
 	}
 
@@ -51,29 +49,33 @@ export function validateGitHubUsername(username) {
 		return {
 			isValid: false,
 			message:
-				'Username can only contain alphanumeric characters and hyphens, and cannot start with a hyphen',
+				'Username can only contain alphanumeric characters and hyphens (not at the beginning)',
 		};
 	}
 
-	return { isValid: true };
+	return {
+		isValid: true,
+		message: '',
+	};
 }
 
 /**
- * Validate a repository name
+ * Repository name validation
  * @param {string} repoName - Repository name to validate
  * @returns {Object} Result of validation { isValid, message }
  */
 export function validateRepoName(repoName) {
 	if (!repoName || repoName.trim() === '') {
-		return { isValid: true };
+		return {
+			isValid: false,
+			message: 'Please enter a repository name',
+		};
 	}
-
-	repoName = repoName.trim();
 
 	if (repoName.length > CONFIG.REPO_NAME.MAX_LENGTH) {
 		return {
 			isValid: false,
-			message: `Repository name cannot exceed ${CONFIG.REPO_NAME.MAX_LENGTH} characters`,
+			message: `Repository name must be less than ${CONFIG.REPO_NAME.MAX_LENGTH} characters`,
 		};
 	}
 
@@ -81,105 +83,127 @@ export function validateRepoName(repoName) {
 		return {
 			isValid: false,
 			message:
-				'Repository name can only contain alphanumeric characters, periods, hyphens and underscores',
+				'Repository name can only contain alphanumeric characters, periods, underscores, and hyphens',
 		};
 	}
 
-	return { isValid: true };
+	return {
+		isValid: true,
+		message: '',
+	};
 }
 
 /**
- * Validate a project name
+ * Project name validation
  * @param {string} projectName - Project name to validate
  * @returns {Object} Result of validation { isValid, message }
  */
 export function validateProjectName(projectName) {
 	if (!projectName || projectName.trim() === '') {
-		return { isValid: true };
+		return {
+			isValid: false,
+			message: 'Please enter a project name',
+		};
 	}
-
-	projectName = projectName.trim();
 
 	if (projectName.length > CONFIG.PROJECT_NAME.MAX_LENGTH) {
 		return {
 			isValid: false,
-			message: `Project name cannot exceed ${CONFIG.PROJECT_NAME.MAX_LENGTH} characters`,
+			message: `Project name must be less than ${CONFIG.PROJECT_NAME.MAX_LENGTH} characters`,
 		};
 	}
 
-	return { isValid: true };
+	return {
+		isValid: true,
+		message: '',
+	};
 }
 
 /**
- * Validate a description
- * @param {string} description - Descripción a validar
- * @returns {Object} Resultado de la validación { isValid, message }
+ * Project description validation
+ * @param {string} description - Project description to validate
+ * @returns {Object} Result of validation { isValid, message }
  */
 export function validateDescription(description) {
-	if (!description || description.trim() === '') {
-		return { isValid: true };
+	if (!description) {
+		// Description is optional, so empty is valid
+		return {
+			isValid: true,
+			message: '',
+		};
 	}
-
-	description = description.trim();
 
 	if (description.length > CONFIG.DESCRIPTION.MAX_LENGTH) {
 		return {
 			isValid: false,
-			message: `Description cannot exceed ${CONFIG.DESCRIPTION.MAX_LENGTH} characters`,
+			message: `Description must be less than ${CONFIG.DESCRIPTION.MAX_LENGTH} characters`,
 		};
 	}
 
-	return { isValid: true };
+	return {
+		isValid: true,
+		message: '',
+	};
 }
 
 /**
- * Validate a color
- * @param {string} color - Color to validate
+ * Color hexadecimal validation
+ * @param {string} color - Hexadecimal color to validate
  * @returns {Object} Result of validation { isValid, message }
  */
 export function validateColor(color) {
 	if (!color) {
-		return { isValid: false, message: 'Color value is required' };
+		return {
+			isValid: false,
+			message: 'Please provide a color',
+		};
 	}
 
 	if (!CONFIG.COLOR.PATTERN.test(color)) {
 		return {
 			isValid: false,
-			message: 'Invalid hex color format (e.g. #RRGGBB or #RGB)',
+			message: 'Invalid color format, must be a valid hex color (e.g., #FF0000)',
 		};
 	}
 
-	return { isValid: true };
+	return {
+		isValid: true,
+		message: '',
+	};
 }
 
 /**
- * Validate an image file
- * @param {File} file - Archivo de imagen a validar
- * @returns {Object}  Result of validation { isValid, message }
+ * Image file validation
+ * @param {File} file - Image file to validate
+ * @returns {Object} Result of validation { isValid, message }
  */
 export function validateImageFile(file) {
 	if (!file) {
-		return { isValid: true };
+		return {
+			isValid: false,
+			message: 'Please select a file',
+		};
 	}
 
-	// validate file type
 	if (!CONFIG.IMAGE.ALLOWED_TYPES.includes(file.type)) {
 		return {
 			isValid: false,
-			message: 'File must be an image (JPG, PNG, GIF, WebP or SVG)',
+			message: 'File must be a valid image (JPEG, PNG, GIF, WEBP, or SVG)',
 		};
 	}
 
-	// validate file size
-	const maxSizeBytes = CONFIG.IMAGE.MAX_SIZE_MB * 1024 * 1024;
-	if (file.size > maxSizeBytes) {
+	const fileSizeInMB = file.size / (1024 * 1024);
+	if (fileSizeInMB > CONFIG.IMAGE.MAX_SIZE_MB) {
 		return {
 			isValid: false,
-			message: `Image size must be less than ${CONFIG.IMAGE.MAX_SIZE_MB}MB`,
+			message: `File size must be less than ${CONFIG.IMAGE.MAX_SIZE_MB}MB`,
 		};
 	}
 
-	return { isValid: true };
+	return {
+		isValid: true,
+		message: '',
+	};
 }
 
 /**
@@ -260,26 +284,23 @@ export function validateForm(formData) {
 }
 
 /**
- * sanitize text
+ * Sanitize text to prevent XSS attacks
  * @param {string} text - Text to sanitize
  * @returns {string} Sanitized text
  */
 export function sanitizeText(text) {
 	if (!text) return '';
 
-	const map = {
-		'&': '&amp;',
-		'<': '&lt;',
-		'>': '&gt;',
-		'"': '&quot;',
-		"'": '&#039;',
-	};
-
-	return text.replace(/[&<>"']/g, (m) => map[m]);
+	return text
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#039;');
 }
 
 /**
- * validate a URL
+ * Validate a URL
  * @param {string} url - URL to validate
  * @returns {boolean} True if the URL is valid, false otherwise
  */
