@@ -6,685 +6,647 @@ import {
 	updateClassList,
 	setCSSVariables,
 } from '../../utils/domUtils.js';
+
 /**
- * Clase responsable de gestionar la carga de archivos para la aplicación
- * Maneja la carga del logo del proyecto y la imagen de fondo
+ * Class responsible for managing the background image of the card
+ * Implements the Single Responsibility Principle (SRP)
+ */
+class BackgroundImageManager {
+	/**
+	 * Constructor for the background image manager
+	 * @param {Object} options - Configuration options
+	 * @param {HTMLElement} options.cardElement - Card element
+	 * @param {HTMLInputElement} options.inputElement - Input element for the image
+	 * @param {HTMLElement} options.fileNameElement - Element to display file name
+	 * @param {HTMLElement} options.removeButtonElement - Button to remove the image
+	 * @param {HTMLInputElement} options.opacitySlider - Slider to control opacity
+	 * @param {HTMLElement} options.opacityValueElement - Element to display opacity value
+	 */
+	constructor(options) {
+		this.card = options.cardElement;
+		this.input = options.inputElement;
+		this.fileName = options.fileNameElement;
+		this.removeBtn = options.removeButtonElement;
+		this.opacitySlider = options.opacitySlider;
+		this.opacityValue = options.opacityValueElement;
+		this.opacityGroup = document.getElementById('bgOpacityGroup');
+
+		this.opacity = 0.6;
+		this.imageUrl = null;
+		this.hasImage = false;
+
+		this.initEvents();
+		this.setupOpacityControl();
+	}
+
+	/**
+	 * Initializes the events for the manager
+	 */
+	initEvents() {
+		if (this.input) {
+			this.input.addEventListener('change', this.handleImageChange.bind(this));
+		}
+
+		if (this.removeBtn) {
+			this.removeBtn.addEventListener('click', this.removeImage.bind(this));
+		}
+	}
+
+	/**
+	 * Handles image change event
+	 * @param {Event} e - Change event
+	 */
+	handleImageChange(e) {
+		if (!e.target.files || !e.target.files[0]) return;
+
+		const file = e.target.files[0];
+
+		// Verify if it's an image
+		if (!file.type.match('image.*')) {
+			this.dispatchEvent('error', {
+				message: 'File must be an image',
+			});
+			return;
+		}
+
+		const reader = new FileReader();
+
+		reader.onload = (event) => {
+			this.imageUrl = event.target.result;
+			this.hasImage = true;
+
+			// Update UI
+			this.updateImage(event.target.result);
+			this.updateFileName(file.name);
+			this.updateOpacityControlVisibility();
+
+			// Notify change
+			this.dispatchEvent('backgroundimage', {
+				file,
+				dataUrl: event.target.result,
+			});
+		};
+
+		reader.onerror = (error) => {
+			console.error('Error reading file:', error);
+			this.dispatchEvent('error', {
+				message: 'Error reading file',
+			});
+		};
+
+		reader.readAsDataURL(file);
+	}
+
+	/**
+	 * Updates the background image
+	 * @param {string} dataUrl - Data URL of the image
+	 */
+	updateImage(dataUrl) {
+		if (!this.card) return;
+
+		// Apply background image to the card container
+		this.card.style.backgroundImage = `url(${dataUrl})`;
+		this.card.style.backgroundSize = 'cover';
+		this.card.style.backgroundPosition = 'center';
+		this.card.classList.add('has-bg-image');
+
+		// Apply current opacity
+		this.applyOverlayOpacity(this.opacity);
+	}
+
+	/**
+	 * Updates the displayed file name
+	 * @param {string} fileName - File name
+	 */
+	updateFileName(fileName) {
+		if (this.fileName) {
+			this.fileName.textContent = fileName;
+		}
+	}
+
+	/**
+	 * Removes the background image
+	 */
+	removeImage() {
+		if (this.card) {
+			this.card.style.backgroundImage = 'none';
+			this.card.classList.remove('has-bg-image');
+		}
+
+		if (this.input) {
+			this.input.value = '';
+		}
+
+		if (this.fileName) {
+			this.fileName.textContent = 'No file chosen';
+		}
+
+		this.hasImage = false;
+		this.imageUrl = null;
+		this.updateOpacityControlVisibility();
+
+		// Notify change
+		this.dispatchEvent('backgroundimageremoved', {});
+	}
+
+	/**
+	 * Sets up the opacity control
+	 */
+	setupOpacityControl() {
+		if (!this.opacitySlider || !this.opacityValue) return;
+
+		// Initialize with current value
+		this.opacitySlider.value = this.opacity;
+		this.opacityValue.textContent = this.opacity;
+
+		// Change event
+		this.opacitySlider.addEventListener('input', (e) => {
+			const value = parseFloat(e.target.value);
+			this.opacityValue.textContent = value;
+
+			// Update opacity
+			this.opacity = value;
+			this.applyOverlayOpacity(value);
+
+			// Dispatch custom event
+			this.dispatchEvent('backgroundopacity', {
+				value: value,
+			});
+		});
+
+		// Update initial visibility
+		this.updateOpacityControlVisibility();
+	}
+
+	/**
+	 * Applies the background overlay opacity
+	 * @param {number} opacity - Opacity value between 0 and 1
+	 */
+	applyOverlayOpacity(opacity) {
+		// Update global CSS variable
+		document.documentElement.style.setProperty('--bg-overlay-opacity', opacity);
+
+		// If card has a background image, apply directly
+		if (this.card && this.card.classList.contains('has-bg-image')) {
+			// Create or update a dynamic style for the opacity
+			let overlayStyle = document.getElementById('bg-overlay-style');
+			if (!overlayStyle) {
+				overlayStyle = document.createElement('style');
+				overlayStyle.id = 'bg-overlay-style';
+				document.head.appendChild(overlayStyle);
+			}
+
+			overlayStyle.textContent = `
+				.has-bg-image::before {
+					content: '';
+					position: absolute;
+					top: 0;
+					left: 0;
+					right: 0;
+					bottom: 0;
+					background-color: rgba(0, 0, 0, ${opacity});
+					z-index: 1;
+					pointer-events: none;
+				}
+				
+				/* Ensure elements inside the card are above the overlay */
+				.has-bg-image .card-content {
+					position: relative;
+					z-index: 2;
+				}
+			`;
+		}
+	}
+
+	/**
+	 * Updates opacity control visibility
+	 */
+	updateOpacityControlVisibility() {
+		if (!this.opacityGroup) return;
+		this.opacityGroup.style.display = this.hasImage ? 'block' : 'none';
+	}
+
+	/**
+	 * Dispatches a background-related event
+	 * @param {string} type - Event type
+	 * @param {Object} detail - Event details
+	 */
+	dispatchEvent(type, detail = {}) {
+		const event = new CustomEvent('filechange', {
+			bubbles: true,
+			detail: {
+				type,
+				...detail,
+			},
+		});
+		document.dispatchEvent(event);
+	}
+
+	/**
+	 * Gets the current image URL
+	 * @returns {string|null} Image URL or null
+	 */
+	getImageUrl() {
+		return this.imageUrl;
+	}
+
+	/**
+	 * Applies an image from a data URL
+	 * @param {Object} imageData - Image data
+	 */
+	applyImage(imageData) {
+		if (!imageData || !imageData.dataUrl) return;
+
+		this.imageUrl = imageData.dataUrl;
+		this.hasImage = true;
+		this.updateImage(imageData.dataUrl);
+		this.updateFileName(imageData.name || 'background-image');
+		this.updateOpacityControlVisibility();
+	}
+
+	/**
+	 * Resets the manager state
+	 */
+	reset() {
+		this.removeImage();
+		this.opacity = 0.6;
+
+		if (this.opacitySlider && this.opacityValue) {
+			this.opacitySlider.value = this.opacity;
+			this.opacityValue.textContent = this.opacity;
+			this.applyOverlayOpacity(this.opacity);
+		}
+	}
+}
+
+/**
+ * Class responsible for managing the project logo
+ * Implements the Single Responsibility Principle (SRP)
+ */
+class ProjectLogoManager {
+	/**
+	 * Constructor for the logo manager
+	 * @param {Object} options - Configuration options
+	 * @param {HTMLInputElement} options.inputElement - Input element for logo
+	 * @param {HTMLElement} options.fileNameElement - Element to display file name
+	 * @param {HTMLElement} options.removeButtonElement - Button to remove the image
+	 */
+	constructor(options) {
+		this.input = options.inputElement;
+		this.fileName = options.fileNameElement;
+		this.removeBtn = options.removeButtonElement;
+
+		this.logoUrl = null;
+		this.hasLogo = false;
+
+		this.initEvents();
+	}
+
+	/**
+	 * Initializes the events for the manager
+	 */
+	initEvents() {
+		if (this.input) {
+			this.input.addEventListener('change', this.handleLogoChange.bind(this));
+		}
+
+		if (this.removeBtn) {
+			this.removeBtn.addEventListener('click', this.removeLogo.bind(this));
+		}
+	}
+
+	/**
+	 * Handles logo change event
+	 * @param {Event} e - Change event
+	 */
+	handleLogoChange(e) {
+		if (!e.target.files || !e.target.files[0]) return;
+
+		const file = e.target.files[0];
+
+		// Verify if it's an image
+		if (!file.type.match('image.*')) {
+			this.dispatchEvent('error', {
+				message: 'File must be an image',
+			});
+			return;
+		}
+
+		const reader = new FileReader();
+
+		reader.onload = (event) => {
+			this.logoUrl = event.target.result;
+			this.hasLogo = true;
+
+			// Update UI
+			this.updateLogo(event.target.result);
+			this.updateFileName(file.name);
+
+			// Notify change
+			this.dispatchEvent('projectlogo', {
+				file,
+				dataUrl: event.target.result,
+			});
+		};
+
+		reader.onerror = (error) => {
+			console.error('Error reading file:', error);
+			this.dispatchEvent('error', {
+				message: 'Error reading file',
+			});
+		};
+
+		reader.readAsDataURL(file);
+	}
+
+	/**
+	 * Updates the project logo
+	 * @param {string} dataUrl - Data URL of the image
+	 */
+	updateLogo(dataUrl) {
+		// Get logo container
+		const container = document.querySelector('.content-project-logo');
+
+		if (!container) {
+			console.error('Logo container not found (.content-project-logo)');
+			return;
+		}
+
+		// Clear container first
+		container.innerHTML = '';
+
+		if (dataUrl) {
+			// Create a new image element and configure it
+			const logoImg = document.createElement('img');
+			logoImg.src = dataUrl;
+			logoImg.alt = 'Project Logo';
+			logoImg.className = 'project-logo';
+			logoImg.id = 'displayProjectLogo';
+
+			// Add image to container
+			container.appendChild(logoImg);
+
+			// Show container
+			container.style.display = 'block';
+		} else {
+			// If no image, just hide container
+			container.style.display = 'none';
+		}
+	}
+
+	/**
+	 * Updates the displayed file name
+	 * @param {string} fileName - File name
+	 */
+	updateFileName(fileName) {
+		if (this.fileName) {
+			this.fileName.textContent = fileName;
+		}
+	}
+
+	/**
+	 * Removes the project logo
+	 */
+	removeLogo() {
+		if (this.input) {
+			this.input.value = '';
+		}
+
+		if (this.fileName) {
+			this.fileName.textContent = 'No file chosen';
+		}
+
+		this.logoUrl = null;
+		this.hasLogo = false;
+
+		// Hide the logo in UI
+		this.updateLogo(null);
+
+		// Notify change
+		this.dispatchEvent('projectlogoremoved', {});
+	}
+
+	/**
+	 * Dispatches a logo-related event
+	 * @param {string} type - Event type
+	 * @param {Object} detail - Event details
+	 */
+	dispatchEvent(type, detail = {}) {
+		const event = new CustomEvent('filechange', {
+			bubbles: true,
+			detail: {
+				type,
+				...detail,
+			},
+		});
+		document.dispatchEvent(event);
+	}
+
+	/**
+	 * Gets the current logo URL
+	 * @returns {string|null} Logo URL or null
+	 */
+	getLogoUrl() {
+		return this.logoUrl;
+	}
+
+	/**
+	 * Applies a logo from a data URL
+	 * @param {Object} logoData - Logo data
+	 */
+	applyLogo(logoData) {
+		if (!logoData || !logoData.dataUrl) return;
+
+		this.logoUrl = logoData.dataUrl;
+		this.hasLogo = true;
+		this.updateLogo(logoData.dataUrl);
+		this.updateFileName(logoData.name || 'logo-image');
+	}
+
+	/**
+	 * Resets the manager state
+	 */
+	reset() {
+		if (this.input) {
+			this.input.value = '';
+		}
+
+		if (this.fileName) {
+			this.fileName.textContent = 'No file chosen';
+		}
+
+		this.logoUrl = null;
+		this.hasLogo = false;
+
+		// Hide the logo element when resetting
+		this.updateLogo(null);
+	}
+}
+
+/**
+ * Class responsible for managing file uploads for the application
+ * Coordinates specialized managers for logo and background
+ * Implements the Dependency Inversion Principle (DIP)
  */
 export class FileUploader {
 	/**
-	 * Constructor de la clase que inicializa las referencias y estado
-	 * @param {Object} options - Opciones de configuración (selectores de elementos)
+	 * Constructor
+	 * @param {Object} options - Configuration options
 	 */
 	constructor(options = {}) {
-		this.selectors = {
-			projectLogo: options.projectLogoSelector || '#projectLogo',
-			projectLogoFileName: options.projectLogoFileNameSelector || '#projectLogoFileName',
-			bgImage: options.bgImageSelector || '#bgImage',
-			bgImageFileName: options.bgImageFileNameSelector || '#bgImageFileName',
-			removeBgImage: options.removeBgImageSelector || '#removeBgImage',
-			logoContainer: options.logoContainerSelector || '#logoContainer',
-			card: options.cardSelector || '#githubCard',
+		this.options = {
+			projectLogoSelector: '#projectLogo',
+			projectLogoFileNameSelector: '#projectLogoFileName',
+			removeProjectLogoSelector: '#removeProjectLogo',
+			bgImageSelector: '#bgImage',
+			bgImageFileNameSelector: '#bgImageFileName',
+			removeBgImageSelector: '#removeBgImage',
+			logoContainerSelector: '.card-icon',
+			cardSelector: '.card-wrapper',
+			bgOpacitySliderSelector: '#bgOpacity',
+			bgOpacityValueSelector: '#bgOpacityValue',
+			...options,
 		};
 
-		this.elements = this.cacheElements();
 		this.state = {
 			hasProjectLogo: false,
 			hasBackgroundImage: false,
-			projectLogo: null, // Para almacenar datos de logo
-			backgroundImage: null, // Para almacenar datos de imagen de fondo
+			backgroundOpacity: 0.6,
+			projectLogoUrl: null,
+			backgroundImageUrl: null,
 		};
 
 		this.init();
 	}
 
 	/**
-	 * Inicializa el componente, configura listeners
+	 * Initializes the components
 	 */
 	init() {
-		this.setupEventListeners();
-		this.setupOpacityControl();
-		if (
-			this.elements.card &&
-			this.elements.card.style.backgroundImage &&
-			this.elements.card.style.backgroundImage !== 'none'
-		) {
-			this.state.hasBackgroundImage = true;
-		}
+		// Get DOM elements
+		this.cacheElements();
 
-		this.updateOpacityControlVisibility();
+		// Initialize specialized managers
+		this.initializeManagers();
+
+		// Subscribe to manager events
+		this.setupEventListeners();
 	}
 
 	/**
-	 * Guarda referencias a los elementos del DOM
-	 * @returns {Object} Referencias a los elementos del DOM
+	 * Gets and stores references to DOM elements
 	 */
 	cacheElements() {
-		return {
-			projectLogo: {
-				input: document.querySelector(this.selectors.projectLogo),
-				fileName: document.querySelector(this.selectors.projectLogoFileName),
-			},
-			bgImage: {
-				input: document.querySelector(this.selectors.bgImage),
-				fileName: document.querySelector(this.selectors.bgImageFileName),
-				removeBtn: document.querySelector(this.selectors.removeBgImage),
-			},
-			logoContainer: document.querySelector(this.selectors.logoContainer),
-			card: document.querySelector(this.selectors.card),
-		};
+		this.projectLogoInput = document.querySelector(this.options.projectLogoSelector);
+		this.projectLogoFileName = document.querySelector(this.options.projectLogoFileNameSelector);
+		this.removeProjectLogoBtn = document.querySelector(this.options.removeProjectLogoSelector);
+		this.bgImageInput = document.querySelector(this.options.bgImageSelector);
+		this.bgImageFileName = document.querySelector(this.options.bgImageFileNameSelector);
+		this.removeBgImageBtn = document.querySelector(this.options.removeBgImageSelector);
+		this.logoContainer = document.querySelector(this.options.logoContainerSelector);
+		this.card = document.querySelector(this.options.cardSelector);
+		this.bgOpacitySlider = document.querySelector(this.options.bgOpacitySliderSelector);
+		this.bgOpacityValue = document.querySelector(this.options.bgOpacityValueSelector);
 	}
 
 	/**
-	 * Configura los event listeners para los inputs de archivo
+	 * Initializes specialized managers
+	 */
+	initializeManagers() {
+		// Logo manager
+		this.logoManager = new ProjectLogoManager({
+			inputElement: this.projectLogoInput,
+			fileNameElement: this.projectLogoFileName,
+			removeButtonElement: this.removeProjectLogoBtn,
+		});
+
+		// Background image manager
+		this.backgroundManager = new BackgroundImageManager({
+			cardElement: this.card,
+			inputElement: this.bgImageInput,
+			fileNameElement: this.bgImageFileName,
+			removeButtonElement: this.removeBgImageBtn,
+			opacitySlider: this.bgOpacitySlider,
+			opacityValueElement: this.bgOpacityValue,
+		});
+	}
+
+	/**
+	 * Sets up event listeners
 	 */
 	setupEventListeners() {
-		// Project Logo Upload
-		const projectLogoInput = this.elements.projectLogo.input;
-		if (projectLogoInput) {
-			projectLogoInput.addEventListener('change', (e) => this.handleProjectLogoUpload(e));
-		}
+		// Subscribe to events to update state
+		document.addEventListener('filechange', (e) => {
+			const { type, dataUrl } = e.detail;
 
-		// Background Image Upload
-		const bgImageInput = this.elements.bgImage.input;
-		if (bgImageInput) {
-			bgImageInput.addEventListener('change', (e) => this.handleBackgroundImageUpload(e));
-		}
-
-		// Remove Background Button
-		const removeBgBtn = this.elements.bgImage.removeBtn;
-		if (removeBgBtn) {
-			removeBgBtn.addEventListener('click', () => this.removeBackgroundImage());
-		}
-
-		// Evento de arrastrar y soltar para el logo
-		const logoContainer = this.elements.logoContainer;
-		if (logoContainer) {
-			this.setupDragAndDrop(logoContainer, 'logo');
-		}
-
-		// Evento de arrastrar y soltar para la imagen de fondo
-		const card = this.elements.card;
-		if (card) {
-			this.setupDragAndDrop(card, 'background');
-		}
+			if (type === 'projectlogo') {
+				this.state.projectLogoUrl = dataUrl;
+				this.state.hasProjectLogo = true;
+			} else if (type === 'projectlogoremoved') {
+				this.state.projectLogoUrl = null;
+				this.state.hasProjectLogo = false;
+			} else if (type === 'backgroundimage') {
+				this.state.backgroundImageUrl = dataUrl;
+				this.state.hasBackgroundImage = true;
+			} else if (type === 'backgroundimageremoved') {
+				this.state.backgroundImageUrl = null;
+				this.state.hasBackgroundImage = false;
+			} else if (type === 'backgroundopacity') {
+				this.state.backgroundOpacity = e.detail.value;
+			}
+		});
 	}
 
 	/**
-	 * Configura eventos de arrastrar y soltar para cargar imágenes
-	 * @param {HTMLElement} dropZone - Elemento que servirá como zona para soltar
-	 * @param {string} type - Tipo de imagen ('logo' o 'background')
+	 * Applies an image from stored data URL
+	 * @param {Object} imageData - Image data
+	 * @param {string} type - Image type (logo or background)
 	 */
-	setupDragAndDrop(dropZone, type) {
-		['dragenter', 'dragover', 'dragleave', 'drop'].forEach((eventName) => {
-			dropZone.addEventListener(
-				eventName,
-				(e) => {
-					e.preventDefault();
-					e.stopPropagation();
-				},
-				false
-			);
-		});
-
-		['dragenter', 'dragover'].forEach((eventName) => {
-			dropZone.addEventListener(
-				eventName,
-				() => {
-					updateClassList(dropZone, {
-						'drop-zone-active': true,
-					});
-				},
-				false
-			);
-		});
-
-		['dragleave', 'drop'].forEach((eventName) => {
-			dropZone.addEventListener(
-				eventName,
-				() => {
-					updateClassList(dropZone, {
-						'drop-zone-active': false,
-					});
-				},
-				false
-			);
-		});
-
-		dropZone.addEventListener(
-			'drop',
-			(e) => {
-				const dt = e.dataTransfer;
-				if (dt.files && dt.files.length) {
-					if (type === 'logo') {
-						this.processDroppedFile(dt.files[0], 'logo');
-					} else if (type === 'background') {
-						this.processDroppedFile(dt.files[0], 'background');
-					}
-				}
-			},
-			false
-		);
-	}
-
-	/**
-	 * Procesa un archivo soltado mediante drag & drop
-	 * @param {File} file - Archivo a procesar
-	 * @param {string} type - Tipo de archivo ('logo' o 'background')
-	 */
-	processDroppedFile(file, type) {
-		const validationResult = validateImageFile(file);
-		if (!validationResult.isValid) {
-			this.showNotification(validationResult.message, 'error');
-			return;
-		}
+	applyImage(imageData, type) {
+		if (!imageData || !imageData.dataUrl) return;
 
 		if (type === 'logo') {
-			// Actualizar el input de archivo para mantener consistencia
-			const input = this.elements.projectLogo.input;
-			if (input) {
-				// Crear un DataTransfer para simular una selección de archivo
-				const dataTransfer = new DataTransfer();
-				dataTransfer.items.add(file);
-				input.files = dataTransfer.files;
-
-				// Disparar el evento de cambio
-				const event = new Event('change', { bubbles: true });
-				input.dispatchEvent(event);
-			}
+			this.logoManager.applyLogo(imageData);
+			this.state.projectLogoUrl = imageData.dataUrl;
+			this.state.hasProjectLogo = true;
 		} else if (type === 'background') {
-			// Similar para imagen de fondo
-			const input = this.elements.bgImage.input;
-			if (input) {
-				const dataTransfer = new DataTransfer();
-				dataTransfer.items.add(file);
-				input.files = dataTransfer.files;
-
-				const event = new Event('change', { bubbles: true });
-				input.dispatchEvent(event);
-			}
+			this.backgroundManager.applyImage(imageData);
+			this.state.backgroundImageUrl = imageData.dataUrl;
+			this.state.hasBackgroundImage = true;
 		}
 	}
 
 	/**
-	 * Maneja la carga del logo del proyecto
-	 * @param {Event} event - Evento de cambio del input file
-	 * @returns {Promise} Promesa que se resuelve cuando se carga la imagen
-	 */
-	handleProjectLogoUpload(event) {
-		return new Promise((resolve, reject) => {
-			const file = event.target.files && event.target.files[0];
-			if (!file) {
-				return resolve(null);
-			}
-
-			// Validar archivo
-			const validationResult = validateImageFile(file);
-			if (!validationResult.isValid) {
-				this.showNotification(validationResult.message, 'error');
-				return reject(new Error(validationResult.message));
-			}
-
-			const reader = new FileReader();
-
-			reader.onload = (e) => {
-				try {
-					// Guardar datos en estado
-					this.state.projectLogo = {
-						file: file,
-						dataUrl: e.target.result,
-						name: file.name,
-					};
-
-					// Limpiar contenedor usando clearElement de domUtils
-					const logoContainer = this.elements.logoContainer;
-					if (logoContainer) {
-						clearElement(logoContainer);
-
-						// Crear imagen con createElement de domUtils
-						const img = createElement('img', {
-							src: e.target.result,
-							alt: 'Project Logo',
-							className: 'project-logo',
-						});
-
-						logoContainer.appendChild(img);
-
-						// Actualizar nombre del archivo y estado
-						const fileName = this.elements.projectLogo.fileName;
-						if (fileName) {
-							fileName.textContent = file.name;
-						}
-
-						this.state.hasProjectLogo = true;
-
-						// Disparar evento personalizado
-						this.dispatchFileEvent('projectlogo', {
-							file: file,
-							dataUrl: e.target.result,
-						});
-
-						resolve({
-							file: file,
-							dataUrl: e.target.result,
-						});
-					}
-				} catch (error) {
-					reject(error);
-				}
-			};
-
-			reader.onerror = (error) => {
-				reject(error);
-			};
-
-			reader.readAsDataURL(file);
-		});
-	}
-
-	/**
-	 * Maneja la carga de la imagen de fondo
-	 * @param {Event} event - Evento de cambio del input file
-	 * @returns {Promise} Promesa que se resuelve cuando se carga la imagen
-	 */
-	handleBackgroundImageUpload(event) {
-		return new Promise((resolve, reject) => {
-			const file = event.target.files && event.target.files[0];
-			if (!file) {
-				return resolve(null);
-			}
-
-			// Validar archivo
-			const validationResult = validateImageFile(file);
-			if (!validationResult.isValid) {
-				this.showNotification(validationResult.message, 'error');
-				return reject(new Error(validationResult.message));
-			}
-
-			const reader = new FileReader();
-
-			reader.onload = (e) => {
-				try {
-					// Guardar datos en estado
-					this.state.backgroundImage = {
-						file: file,
-						dataUrl: e.target.result,
-						name: file.name,
-					};
-
-					// Actualizar estilo de la tarjeta usando applyStyles de domUtils
-					const card = this.elements.card;
-					if (card) {
-						applyStyles(card, {
-							backgroundImage: `url(${e.target.result})`,
-							backgroundSize: 'cover',
-							backgroundPosition: 'center',
-						});
-
-						// Añadir clase para oscurecer el fondo
-						updateClassList(card, {
-							'has-bg-image': true,
-						});
-					}
-
-					// Actualizar nombre del archivo y estado
-					const fileName = this.elements.bgImage.fileName;
-					if (fileName) {
-						fileName.textContent = file.name;
-					}
-
-					this.state.hasBackgroundImage = true;
-
-					// Disparar evento personalizado
-					this.dispatchFileEvent('backgroundimage', {
-						file: file,
-						dataUrl: e.target.result,
-					});
-
-					this.updateOpacityControlVisibility();
-
-					resolve({
-						file: file,
-						dataUrl: e.target.result,
-					});
-				} catch (error) {
-					reject(error);
-				}
-			};
-
-			reader.onerror = (error) => {
-				reject(error);
-			};
-
-			reader.readAsDataURL(file);
-		});
-	}
-
-	/**
-	 * Elimina la imagen de fondo
-	 */
-	removeBackgroundImage() {
-		const card = this.elements.card;
-		if (card) {
-			// Usar applyStyles de domUtils
-			applyStyles(card, {
-				backgroundImage: 'none',
-			});
-
-			// Usar updateClassList de domUtils
-			updateClassList(card, {
-				'has-bg-image': false,
-			});
-		}
-
-		// Resetear input y nombre
-		const bgImageInput = this.elements.bgImage.input;
-		const bgImageFileName = this.elements.bgImage.fileName;
-
-		if (bgImageInput) {
-			bgImageInput.value = '';
-		}
-
-		if (bgImageFileName) {
-			bgImageFileName.textContent = 'No file chosen';
-		}
-
-		// Limpiar datos en estado
-		this.state.backgroundImage = null;
-		this.state.hasBackgroundImage = false;
-
-		// Disparar evento personalizado
-		this.dispatchFileEvent('backgroundimageremoved');
-		this.updateOpacityControlVisibility();
-	}
-
-	/**
-	 * Elimina el logo del proyecto
-	 */
-	removeProjectLogo() {
-		const logoContainer = this.elements.logoContainer;
-		if (logoContainer) {
-			// Usar clearElement de domUtils
-			clearElement(logoContainer);
-		}
-
-		// Resetear input y nombre
-		const projectLogoInput = this.elements.projectLogo.input;
-		const projectLogoFileName = this.elements.projectLogo.fileName;
-
-		if (projectLogoInput) {
-			projectLogoInput.value = '';
-		}
-
-		if (projectLogoFileName) {
-			projectLogoFileName.textContent = 'No file chosen';
-		}
-
-		// Limpiar datos en estado
-		this.state.projectLogo = null;
-		this.state.hasProjectLogo = false;
-
-		// Disparar evento personalizado
-		this.dispatchFileEvent('projectlogoremoved');
-	}
-
-	/**
-	 * Aplica una imagen previamente cargada o desde URL
-	 * @param {Object} options - Opciones para la imagen
-	 * @param {string} type - Tipo de imagen ('logo' o 'background')
-	 * @returns {Promise} Promesa que se resuelve cuando se aplica la imagen
-	 */
-	applyImage(options = {}, type = 'logo') {
-		return new Promise((resolve, reject) => {
-			const { url, dataUrl, file } = options;
-
-			if (!url && !dataUrl && !file) {
-				reject(new Error('No source provided for image'));
-				return;
-			}
-
-			const imageSource = dataUrl || url;
-
-			if (imageSource) {
-				if (type === 'logo') {
-					const logoContainer = this.elements.logoContainer;
-					if (logoContainer) {
-						clearElement(logoContainer);
-
-						const img = createElement('img', {
-							src: imageSource,
-							alt: 'Project Logo',
-							className: 'project-logo',
-						});
-
-						logoContainer.appendChild(img);
-
-						const fileName = this.elements.projectLogo.fileName;
-						if (fileName) {
-							fileName.textContent = options.name || 'Image applied';
-						}
-
-						this.state.hasProjectLogo = true;
-						this.state.projectLogo = {
-							dataUrl: imageSource,
-							name: options.name || 'Applied image',
-						};
-
-						resolve({ success: true, type: 'logo' });
-					}
-				} else if (type === 'background') {
-					const card = this.elements.card;
-					if (card) {
-						applyStyles(card, {
-							backgroundImage: `url(${imageSource})`,
-							backgroundSize: 'cover',
-							backgroundPosition: 'center',
-						});
-
-						updateClassList(card, {
-							'has-bg-image': true,
-						});
-
-						const fileName = this.elements.bgImage.fileName;
-						if (fileName) {
-							fileName.textContent = options.name || 'Image applied';
-						}
-
-						this.state.hasBackgroundImage = true;
-						this.state.backgroundImage = {
-							dataUrl: imageSource,
-							name: options.name || 'Applied image',
-						};
-
-						resolve({ success: true, type: 'background' });
-					}
-				}
-			} else if (file) {
-				// Si se provee un archivo, simular la carga
-				const input =
-					type === 'logo' ? this.elements.projectLogo.input : this.elements.bgImage.input;
-
-				if (input) {
-					const dataTransfer = new DataTransfer();
-					dataTransfer.items.add(file);
-					input.files = dataTransfer.files;
-
-					const event = new Event('change', { bubbles: true });
-					input.dispatchEvent(event);
-					resolve({ success: true, type });
-				} else {
-					reject(new Error(`Input for ${type} not found`));
-				}
-			}
-		});
-	}
-
-	/**
-	 * Dispara un evento personalizado cuando se carga/elimina un archivo
-	 * @param {string} eventType - Tipo de evento ('projectlogo', 'backgroundimage', etc)
-	 * @param {Object} data - Datos asociados al evento
-	 */
-	dispatchFileEvent(eventType, data = {}) {
-		const event = new CustomEvent('filechange', {
-			detail: {
-				type: eventType,
-				...data,
-			},
-			bubbles: true,
-		});
-
-		// Determinar el elemento desde el cual disparar el evento
-		let sourceElement;
-		switch (eventType) {
-			case 'projectlogo':
-			case 'projectlogoremoved':
-				sourceElement = this.elements.projectLogo.input;
-				break;
-			case 'backgroundimage':
-			case 'backgroundimageremoved':
-				sourceElement = this.elements.bgImage.input;
-				break;
-			default:
-				sourceElement = document;
-		}
-
-		if (sourceElement) {
-			sourceElement.dispatchEvent(event);
-		}
-	}
-
-	/**
-	 * Muestra una notificación (si se implementa un sistema de notificaciones)
-	 * @param {string} message - Mensaje a mostrar
-	 * @param {string} type - Tipo de notificación ('success', 'error', 'warning')
-	 */
-	showNotification(message, type) {
-		// Si existe un sistema de notificaciones global, usarlo
-		if (window.notificationSystem) {
-			window.notificationSystem.show(message, type);
-			return;
-		}
-
-		// Fallback simple: alerta en consola
-		console[type === 'error' ? 'error' : type === 'warning' ? 'warn' : 'log'](message);
-	}
-
-	/**
-	 * Obtiene el estado actual de los archivos
-	 * @returns {Object} Estado de los archivos
-	 */
-	getState() {
-		return { ...this.state };
-	}
-
-	/**
-	 * Comprueba si se ha cargado el logo del proyecto
-	 * @returns {boolean} True si hay logo del proyecto
-	 */
-	hasProjectLogo() {
-		return this.state.hasProjectLogo;
-	}
-
-	/**
-	 * Comprueba si se ha cargado una imagen de fondo
-	 * @returns {boolean} True si hay imagen de fondo
-	 */
-	hasBackgroundImage() {
-		return this.state.hasBackgroundImage;
-	}
-
-	/**
-	 * Obtiene la URL del logo actual
-	 * @returns {string|null} URL de datos del logo o null
+	 * Gets the project logo URL
+	 * @returns {string|null} URL of the image or null
 	 */
 	getProjectLogoUrl() {
-		return this.state.projectLogo?.dataUrl || null;
+		return this.logoManager.getLogoUrl();
 	}
 
 	/**
-	 * Obtiene la URL de la imagen de fondo actual
-	 * @returns {string|null} URL de datos de la imagen de fondo o null
+	 * Gets the background image URL
+	 * @returns {string|null} URL of the image or null
 	 */
 	getBackgroundImageUrl() {
-		return this.state.backgroundImage?.dataUrl || null;
+		return this.backgroundManager.getImageUrl();
 	}
 
 	/**
-	 * Restablece todos los archivos a su estado inicial
+	 * Resets all values to defaults
 	 */
 	reset() {
-		// Reset project logo usando clearElement de domUtils
-		const logoContainer = this.elements.logoContainer;
-		if (logoContainer) {
-			clearElement(logoContainer);
-		}
+		// Reset managers
+		this.logoManager.reset();
+		this.backgroundManager.reset();
 
-		if (this.elements.projectLogo.input) {
-			this.elements.projectLogo.input.value = '';
-		}
-
-		if (this.elements.projectLogo.fileName) {
-			this.elements.projectLogo.fileName.textContent = 'No file chosen';
-		}
-
-		// Reset background image
-		this.removeBackgroundImage();
-
-		// Limpiar estado
-		this.state.projectLogo = null;
-		this.state.backgroundImage = null;
-		this.state.hasProjectLogo = false;
-		this.state.hasBackgroundImage = false;
-	}
-
-	/**
-	 * Configura el control de opacidad para imágenes de fondo
-	 */
-	setupOpacityControl() {
-		const opacitySlider = document.getElementById('bgOpacity');
-		const opacityValue = document.querySelector('.opacity-value');
-
-		if (!opacitySlider || !opacityValue) return;
-
-		// Inicializar con el valor actual
-		const initialOpacity = getComputedStyle(document.documentElement)
-			.getPropertyValue('--bg-overlay-opacity')
-			.trim();
-
-		const initialValue = Math.round(parseFloat(initialOpacity) * 100);
-		opacitySlider.value = initialValue;
-		opacityValue.textContent = `${initialValue}%`;
-
-		// Evento de cambio
-		opacitySlider.addEventListener('input', (e) => {
-			const value = e.target.value;
-			opacityValue.textContent = `${value}%`;
-
-			// Actualizar la variable CSS
-			setCSSVariables({
-				'--bg-overlay-opacity': value / 100,
-			});
-
-			// Guardar el valor en el estado
-			this.state.backgroundOpacity = value / 100;
-
-			// Disparar evento personalizado
-			this.dispatchFileEvent('backgroundopacity', {
-				value: value / 100,
-			});
-		});
-	}
-
-	/**
-	 * Actualiza la visibilidad del control de opacidad
-	 */
-	updateOpacityControlVisibility() {
-		const opacityGroup = document.querySelector('.bg-opacity-group');
-		if (!opacityGroup) return;
-
-		if (this.state.hasBackgroundImage) {
-			opacityGroup.style.display = 'block';
-		} else {
-			opacityGroup.style.display = 'none';
-		}
+		// Reset state
+		this.state = {
+			hasProjectLogo: false,
+			hasBackgroundImage: false,
+			backgroundOpacity: 0.6,
+			projectLogoUrl: null,
+			backgroundImageUrl: null,
+		};
 	}
 }
