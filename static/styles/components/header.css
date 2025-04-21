@@ -1,23 +1,35 @@
-/* Contenedor principal del header */
+/* Main header container */
 .app-header {
-	display: flex;
 	justify-content: center;
-	margin-top: 30px;
+	background-color: var(--bg-dark);
+	padding: 1rem 2rem;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	position: relative;
+	z-index: 10;
 }
 
-/* Contenedor del logo */
+.header-content {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	max-width: 1400px;
+	margin: 0 auto;
+}
+
+/* Logo container */
 .logo-container {
 	display: flex;
-	justify-content: flex-end;
 	align-items: center;
+	gap: 0.8rem;
+	justify-content: flex-end;
 }
 
-/* Estilos del logo de la aplicación */
+/* Application logo styles */
 .app-logo {
-	width: 50px;
-	height: 50px;
-	border-radius: 10px;
-	margin-right: 1rem;
+	width: 60px;
+	height: 60px;
+	border-radius: 8px;
+	object-fit: cover;
 	transition: transform 0.3s ease;
 }
 
@@ -25,15 +37,31 @@
 	transform: rotate(5deg);
 }
 
-/* Estilos de títulos dentro del header */
-h1 {
-	font-size: 2.25rem;
-	margin: 0;
-	color: white;
-	background: linear-gradient(90deg, var(--dark-gray), var(--border-color));
-	background-clip: text;
-	-webkit-background-clip: text;
+/* Header title styles */
+
+.content-logo-text {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.link-app-logo-title {
+	text-decoration: none;
+	color: var(--text-light);
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.app-logo-title {
 	color: transparent;
+	background: linear-gradient(90deg, #fff, var(--accent-color));
+	font-size: 1.6rem;
+	-webkit-background-clip: text;
+}
+
+.app-tagline {
+	color: var(--text-light);
+	font-size: 0.9rem;
 }
 
 h2 {
@@ -45,14 +73,14 @@ h2 {
 	gap: 10px;
 }
 
-/* Contenedor principal del generador */
+/* Main generator container */
 .generator {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 30px;
 }
 
-/* Sección de previsualización */
+/* Preview section */
 .preview {
 	flex: 2;
 	min-width: 300px;
@@ -60,13 +88,42 @@ h2 {
 	flex-direction: column;
 }
 
-/* Media queries para adaptación responsive del header */
+.header-actions {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+}
+
+.header-btn {
+	background-color: transparent;
+	color: var(--text-light);
+	border: 1px solid var(--secondary-color);
+	padding: 0.5rem 1rem;
+	border-radius: 6px;
+	font-size: 0.9rem;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.header-btn:hover {
+	background-color: rgba(255, 255, 255, 0.1);
+}
+
+.header-btn i {
+	font-size: 0.9rem;
+}
+
+/* Media queries for responsive header adaptation */
 @media (max-width: 768px) {
 	.app-header {
 		flex-direction: column;
 		align-items: center;
 		text-align: center;
 		margin: 20px 0;
+		padding: 1rem;
 	}
 
 	.logo-container {
@@ -78,8 +135,16 @@ h2 {
 		font-size: 1.8rem;
 	}
 
+	.app-header h1 {
+		font-size: 1.3rem;
+	}
+
 	h2 {
 		font-size: 1.4rem;
+	}
+
+	.app-tagline {
+		display: none;
 	}
 }
 
@@ -95,5 +160,9 @@ h2 {
 
 	h1 {
 		font-size: 1.6rem;
+	}
+
+	.header-actions {
+		display: none;
 	}
 }
