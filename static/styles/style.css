@@ -5,6 +5,7 @@
 @import '/static/styles/components/header.css';
 @import '/static/styles/components/notifications.css';
 @import '/static/styles/components/app-layout.css';
+@import '/static/styles/components/help-modal.css';
 
 /* Global variables - Tech Minimalist Palette */
 :root {
