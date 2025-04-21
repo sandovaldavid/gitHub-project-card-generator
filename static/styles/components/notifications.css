@@ -101,6 +101,7 @@
 }
 
 .notification-message {
+	margin-left: 0.5rem;
 	font-size: 0.95rem;
 	line-height: 1.4;
 }
