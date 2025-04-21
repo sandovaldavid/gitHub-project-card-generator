@@ -1,368 +1,641 @@
 import { CONSTANTS } from '../config.js';
 
 /**
- * Servicio responsable de la exportación de tarjetas a imágenes PNG
- * Maneja todo el proceso de exportación, desde la preparación hasta la descarga
+ * Class responsible for preparing elements for export
+ * Implements the Single Responsibility Principle by separating export preparation
  */
-export class ExportService {
+class ExportPreparationService {
 	/**
-	 * Exporta una tarjeta a imagen PNG
-	 * @param {string} cardId - ID del elemento de la tarjeta a exportar
-	 * @returns {Promise<void>}
-	 * @throws {Error} Si no se encuentra el elemento o hay un error en la exportación
+	 * Creates a temporary container for export
+	 * @returns {HTMLElement} Container configured for export
 	 */
-	async exportToPNG(cardId) {
-		const card = document.getElementById(cardId);
-		if (!card) {
-			throw new Error('Card element not found');
-		}
+	createExportContainer() {
+		const container = document.createElement('div');
 
-		// Crear contenedor temporal para exportación
-		const cardWrapper = this.createExportWrapper();
-
-		// Clonar la tarjeta para manipularla sin afectar la original
-		const cardClone = this.prepareCardForExport(card);
-
-		// Agregar a la página temporalmente
-		cardWrapper.appendChild(cardClone);
-		document.body.appendChild(cardWrapper);
-
-		try {
-			// Esperar para asegurar que todo esté renderizado
-			await new Promise((resolve) => setTimeout(resolve, CONSTANTS.UI.ANIMATION_DELAY));
-
-			// Capturar la imagen con html2canvas
-			const canvas = await html2canvas(cardWrapper, {
-				scale: 1,
-				backgroundColor: null,
-				logging: false,
-				useCORS: true,
-				allowTaint: true,
-				width: CONSTANTS.CARD_EXPORT.WIDTH,
-				height: CONSTANTS.CARD_EXPORT.HEIGHT,
-				onclone: (clonedDoc) => {
-					const clonedWrapper = clonedDoc.querySelector('[style*="fixed"]');
-					if (clonedWrapper) {
-						const borderColor = getComputedStyle(document.documentElement)
-							.getPropertyValue('--border-color')
-							.trim();
-						clonedWrapper.style.borderBottom = `3rem solid ${borderColor}`;
-					}
-
-					// Limpiar cualquier estilo temporal adicional si es necesario
-					this.cleanupClonedDocument(clonedDoc);
-				},
-			});
-
-			// Descargar la imagen
-			this.downloadImage(canvas);
-
-			return canvas; // Return canvas for potential additional processing
-		} finally {
-			// Limpiar el DOM
-			if (cardWrapper.parentNode) {
-				document.body.removeChild(cardWrapper);
-			}
-
-			// Eliminar estilos temporales
-			this.removeTemporaryStyles();
-		}
-	}
-
-	/**
-	 * Crea un contenedor para la exportación de la tarjeta
-	 * @returns {HTMLElement} Contenedor para exportación
-	 */
-	createExportWrapper() {
-		const wrapper = document.createElement('div');
-
-		// Configurar el contenedor para la exportación
-		Object.assign(wrapper.style, {
+		// Configure container with appropriate styles for export
+		Object.assign(container.style, {
 			position: 'fixed',
 			top: '-9999px',
 			left: '-9999px',
 			width: `${CONSTANTS.CARD_EXPORT.WIDTH}px`,
 			height: `${CONSTANTS.CARD_EXPORT.HEIGHT}px`,
-			overflow: 'hidden',
-			zIndex: '-1',
-			boxSizing: 'border-box',
-		});
-
-		// Configurar color de fondo y borde
-		const bgColor = getComputedStyle(document.documentElement)
-			.getPropertyValue('--bg-color')
-			.trim();
-		const borderColor = getComputedStyle(document.documentElement)
-			.getPropertyValue('--border-color')
-			.trim();
-
-		wrapper.style.backgroundColor = bgColor;
-		wrapper.style.borderBottom = `3rem solid ${borderColor}`;
-
-		return wrapper;
-	}
-
-	/**
-	 * Prepara una copia de la tarjeta para exportación
-	 * @param {HTMLElement} originalCard - Elemento de tarjeta original
-	 * @returns {HTMLElement} Clon preparado para exportación
-	 */
-	prepareCardForExport(originalCard) {
-		// Clonar la tarjeta
-		const clone = originalCard.cloneNode(true);
-
-		// Configuraciones básicas
-		Object.assign(clone.style, {
-			width: '100%',
-			height: '100%',
-			maxWidth: 'none',
+			padding: '0',
 			margin: '0',
-			padding: '40pt 40pt 0 40pt',
-			boxShadow: 'none',
-			position: 'relative',
+			overflow: 'hidden',
+			background: 'var(--bg-color)',
+			zIndex: '-9999',
 		});
 
-		// Copiar estilos computados importantes
-		this.copyComputedStyles(originalCard, clone);
-
-		// Escalar elementos internos
-		this.scaleCardElements(clone);
-
-		return clone;
+		return container;
 	}
 
 	/**
-	 * Copia los estilos computados de un elemento a otro
-	 * @param {HTMLElement} source - Elemento fuente
-	 * @param {HTMLElement} target - Elemento destino
+	 * Prepares a copy of the card for export
+	 * @param {HTMLElement} originalElement - Original element to clone
+	 * @returns {HTMLElement} Cloned and prepared element for export
 	 */
-	copyComputedStyles(source, target) {
-		const styles = window.getComputedStyle(source);
+	prepareElementForExport(originalElement) {
+		if (!originalElement) {
+			throw new Error('No element provided for export preparation');
+		}
 
-		// Copiar fondo
-		target.style.backgroundColor = styles.backgroundColor;
+		// Create a deep clone of the element
+		const clonedElement = originalElement.cloneNode(true);
+		const elementId = originalElement.id || 'export-element';
 
-		if (styles.backgroundImage !== 'none') {
-			target.style.backgroundImage = styles.backgroundImage;
-			target.style.backgroundSize = 'cover';
-			target.style.backgroundPosition = 'center';
-			target.style.backgroundRepeat = 'no-repeat';
+		// Get computed styles from the original element
+		const computedStyle = window.getComputedStyle(originalElement);
 
-			// Si tiene clase para oscurecer el fondo
-			if (source.classList.contains('has-bg-image')) {
-				target.classList.add('has-bg-image');
-				this.addDarkOverlayStyle();
+		// Set fixed dimensions for export
+		Object.assign(clonedElement.style, {
+			width: `${CONSTANTS.CARD_EXPORT.WIDTH}px`,
+			height: `${CONSTANTS.CARD_EXPORT.HEIGHT}px`,
+			position: 'relative',
+			transform: 'none',
+			transition: 'none',
+			opacity: '1',
+			backgroundColor: computedStyle.backgroundColor,
+			color: computedStyle.color,
+			borderColor: computedStyle.borderColor,
+			borderWidth: computedStyle.borderWidth,
+			borderStyle: computedStyle.borderStyle,
+			boxShadow: computedStyle.boxShadow,
+			borderRadius: computedStyle.borderRadius,
+		});
+
+		// Configure internal elements (scaling, positions, etc.)
+		this.configureInternalElements(clonedElement, elementId, originalElement);
+
+		return clonedElement;
+	}
+
+	/**
+	 * Configures the internal elements of the card for export
+	 * @param {HTMLElement} clonedElement - Cloned element
+	 * @param {string} elementId - ID of the original element
+	 * @param {HTMLElement} originalElement - Original element reference
+	 */
+	configureInternalElements(clonedElement, elementId, originalElement) {
+		// Remove any unnecessary elements for export
+		const elementsToRemove = clonedElement.querySelectorAll('.export-exclude');
+		elementsToRemove.forEach((el) => el.remove());
+
+		// Ensure all elements have the correct size and position
+		const cardContent = clonedElement.querySelector('.card-content');
+		if (cardContent) {
+			Object.assign(cardContent.style, {
+				position: 'relative',
+				width: '100%',
+				height: '100%',
+			});
+		}
+
+		// Ensure text elements are visible with proper styling
+		const textElements = clonedElement.querySelectorAll('h1, h2, h3, p, span, div');
+		textElements.forEach((el) => {
+			// If original element exists, find the corresponding original for style copying
+			if (originalElement) {
+				// Try to find the same element in the original by ID, class or tag position
+				let originalEl = null;
+				if (el.id) {
+					originalEl = originalElement.querySelector(`#${el.id}`);
+				} else if (el.className) {
+					// Try to find by class and similar position
+					const similarElements = originalElement.querySelectorAll(
+						`.${el.className.split(' ')[0]}`
+					);
+					const index = Array.from(
+						clonedElement.querySelectorAll(`.${el.className.split(' ')[0]}`)
+					).indexOf(el);
+					if (index >= 0 && index < similarElements.length) {
+						originalEl = similarElements[index];
+					}
+				}
+
+				// Copy styles if original element found
+				if (originalEl) {
+					const computedStyle = window.getComputedStyle(originalEl);
+					// Apply critical text styles
+					Object.assign(el.style, {
+						color: computedStyle.color,
+						fontSize: computedStyle.fontSize,
+						fontFamily: computedStyle.fontFamily,
+						fontWeight: computedStyle.fontWeight,
+						textAlign: computedStyle.textAlign,
+						lineHeight: computedStyle.lineHeight,
+					});
+				}
 			}
-		}
-	}
 
-	/**
-	 * Añade un estilo temporal para el overlay oscuro en imágenes de fondo
-	 */
-	addDarkOverlayStyle() {
-		if (document.getElementById('temp-export-styles')) return;
+			// Fallback: Prevent invisible text by ensuring color is set
+			if (el.style.color === 'transparent' || !el.style.color) {
+				el.style.color = 'var(--project-text-color, #333333)';
+			}
+		});
 
-		const style = document.createElement('style');
-		style.id = 'temp-export-styles';
-		style.textContent = `
-            .has-bg-image::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background-color: rgba(0, 0, 0, 0.6);
-                z-index: 1;
-                pointer-events: none;
-            }
-        `;
-		document.head.appendChild(style);
-	}
+		// Fix background images if they exist
+		if (clonedElement.classList.contains('has-bg-image') && originalElement) {
+			// Copy background image from original
+			const computedStyle = window.getComputedStyle(originalElement);
 
-	/**
-	 * Escala los elementos de la tarjeta para la exportación
-	 * @param {HTMLElement} card - Elemento de tarjeta clonado
-	 */
-	scaleCardElements(card) {
-		const scaleFactor = CONSTANTS.CARD_EXPORT.SCALE_FACTOR || 1.5;
+			if (computedStyle.backgroundImage && computedStyle.backgroundImage !== 'none') {
+				clonedElement.style.backgroundImage = computedStyle.backgroundImage;
+				clonedElement.style.backgroundSize = computedStyle.backgroundSize || 'cover';
+				clonedElement.style.backgroundPosition =
+					computedStyle.backgroundPosition || 'center';
 
-		// Header
-		const header = card.querySelector('.card-header');
-		if (header) {
-			Object.assign(header.style, {
-				zIndex: '2',
-				padding: '30px',
-				height: '120px',
-				minHeight: '120px',
-			});
-		}
+				// Ensure overlay for readability if present in original
+				if (originalElement.querySelector('::before')) {
+					const beforeStyle = window.getComputedStyle(originalElement, '::before');
+					// Create an overlay div if needed
+					if (
+						beforeStyle.backgroundColor &&
+						beforeStyle.backgroundColor !== 'rgba(0, 0, 0, 0)'
+					) {
+						const overlay = document.createElement('div');
+						overlay.style.position = 'absolute';
+						overlay.style.top = '0';
+						overlay.style.left = '0';
+						overlay.style.width = '100%';
+						overlay.style.height = '100%';
+						overlay.style.backgroundColor = beforeStyle.backgroundColor;
+						overlay.style.opacity =
+							beforeStyle.opacity || 'var(--bg-overlay-opacity, 0.6)';
+						overlay.style.zIndex = '1';
 
-		// Body
-		const body = card.querySelector('.card-body');
-		if (body) {
-			Object.assign(body.style, {
-				zIndex: '2',
-				padding: '30px',
-			});
-		}
+						// Insert overlay as first child
+						clonedElement.insertBefore(overlay, clonedElement.firstChild);
 
-		// Footer
-		const footer = card.querySelector('.card-footer');
-		if (footer) {
-			Object.assign(footer.style, {
-				zIndex: '2',
-				paddingLeft: '30px',
-				paddingBottom: '120px',
-				minHeight: '180px',
-			});
-		}
-
-		// Textos - escala diferentes elementos de texto
-		const textElements = {
-			repoName: { selector: '#displayRepoName', fontSize: '2.5rem' },
-			username: { selector: '#displayUsername', fontSize: '2rem' },
-			projectName: { selector: '#displayProjectName', fontSize: '4rem' },
-			description: {
-				selector: '#displayDescription',
-				fontSize: '2rem',
-				lineHeight: '1.6',
-			},
-		};
-
-		for (const [key, config] of Object.entries(textElements)) {
-			const element = card.querySelector(config.selector);
-			if (element) {
-				element.style.fontSize = config.fontSize;
-				if (config.lineHeight) {
-					element.style.lineHeight = config.lineHeight;
+						// Ensure content is above overlay
+						const contentElements = clonedElement.querySelectorAll(
+							'.card-content, .content-project-logo, .content-username'
+						);
+						contentElements.forEach((el) => {
+							el.style.position = 'relative';
+							el.style.zIndex = '2';
+						});
+					}
 				}
 			}
 		}
 
-		// Imágenes - escala diferentes elementos de imagen
-		const images = {
-			githubLogo: {
-				selector: '.github-logo',
-				width: '60px',
-				height: '60px',
-				marginRight: '20px',
-			},
-			profilePic: {
-				selector: '.profile-pic',
-				width: '80px',
-				height: '80px',
-			},
-			projectLogo: {
-				selector: '.project-logo',
-				width: 'auto',
-				height: '6rem',
-				borderRadius: '10px',
-			},
-		};
+		// Fix profile picture if present
+		const profilePic = clonedElement.querySelector('#profilePic');
+		if (profilePic && originalElement) {
+			const originalProfilePic = originalElement.querySelector('#profilePic');
+			if (originalProfilePic && originalProfilePic.src) {
+				profilePic.src = originalProfilePic.src;
+				profilePic.style.maxWidth = '100%';
+				profilePic.style.display = 'block';
+			}
+		}
+	}
 
-		for (const [key, config] of Object.entries(images)) {
-			const image = card.querySelector(config.selector);
-			if (image) {
-				if (config.width !== 'auto') {
-					image.style.width = config.width;
+	/**
+	 * Ensures all images are loaded before export
+	 * @param {HTMLElement} element - Element containing images
+	 * @returns {Promise<void>} Promise that resolves when all images are loaded
+	 */
+	async ensureImagesLoaded(element) {
+		if (!element) return;
+
+		const images = element.querySelectorAll('img');
+		if (images.length === 0) return;
+
+		const imagePromises = Array.from(images).map((img) => {
+			return new Promise((resolve) => {
+				if (img.complete) {
+					resolve();
 				} else {
-					image.style.width = 'auto';
+					img.onload = () => resolve();
+					img.onerror = () => resolve(); // Resolve anyway to prevent blocking
 				}
-
-				image.style.height = config.height;
-
-				if (config.marginRight) {
-					image.style.marginRight = config.marginRight;
-				}
-
-				if (config.borderRadius) {
-					image.style.borderRadius = config.borderRadius;
-				}
-			}
-		}
-
-		// Logo container
-		const logoContainer = card.querySelector('.logo-container');
-		if (logoContainer) {
-			Object.assign(logoContainer.style, {
-				position: 'absolute',
-				bottom: '30px',
-				right: '40px',
-				maxHeight: '8rem',
-				zIndex: '2',
-				display: 'flex',
-				alignItems: 'center',
-				justifyContent: 'center',
 			});
+		});
+
+		await Promise.all(imagePromises);
+	}
+}
+
+/**
+ * Base interface for exporters
+ * Implements the Interface Segregation Principle (I)
+ */
+class Exporter {
+	/**
+	 * Exports data in a specific format
+	 * @param {HTMLElement} element - Element to export
+	 * @param {Object} options - Export options
+	 * @returns {Promise<any>} Export result
+	 */
+	async export(element, options) {
+		throw new Error('Export method must be implemented by subclasses');
+	}
+}
+
+/**
+ * Class for creating HTML screenshots
+ * Implements the Single Responsibility Principle (S)
+ */
+class HtmlCapture {
+	/**
+	 * Captures an HTML element
+	 * @param {HTMLElement} element - Element to capture
+	 * @param {Object} options - Capture options
+	 * @returns {Promise<HTMLCanvasElement>} Canvas with the capture
+	 */
+	async captureElement(element, options = {}) {
+		if (!element) {
+			throw new Error('No element provided for capture');
 		}
-	}
 
-	/**
-	 * Limpia estilos en el documento clonado
-	 * @param {Document} clonedDoc - Documento clonado
-	 */
-	cleanupClonedDocument(clonedDoc) {
-		// Implementar limpieza adicional si es necesario
-	}
+		// Create a canvas for capturing
+		const canvas = document.createElement('canvas');
+		const context = canvas.getContext('2d');
 
-	/**
-	 * Elimina estilos temporales añadidos durante la exportación
-	 */
-	removeTemporaryStyles() {
-		const tempStyles = document.getElementById('temp-export-styles');
-		if (tempStyles) {
-			tempStyles.parentNode.removeChild(tempStyles);
-		}
-	}
+		// Set dimensions
+		canvas.width = options.width || CONSTANTS.CARD_EXPORT.WIDTH;
+		canvas.height = options.height || CONSTANTS.CARD_EXPORT.HEIGHT;
 
-	/**
-	 * Descarga una imagen desde un canvas
-	 * @param {HTMLCanvasElement} canvas - Canvas con la imagen renderizada
-	 */
-	downloadImage(canvas) {
+		// Fill background with the same color as the element or specified color
+		const backgroundColor =
+			options.backgroundColor ||
+			window.getComputedStyle(element).backgroundColor ||
+			'var(--bg-color)';
+
+		context.fillStyle = backgroundColor;
+		context.fillRect(0, 0, canvas.width, canvas.height);
+
 		try {
-			const link = document.createElement('a');
-			link.download = 'github-project-card.png';
-			link.href = canvas.toDataURL('image/png');
-			link.style.display = 'none';
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
+			// Try using html2canvas if available
+			if (typeof html2canvas === 'function') {
+				const htmlCanvas = await html2canvas(element, {
+					backgroundColor: backgroundColor,
+					scale: 2,
+					logging: false,
+					useCORS: true,
+					allowTaint: true,
+					width: canvas.width,
+					height: canvas.height,
+				});
+
+				// Copy the html2canvas result to our canvas
+				context.drawImage(htmlCanvas, 0, 0, canvas.width, canvas.height);
+				return canvas;
+			}
+
+			// Fallback to native approach
+			// 1. Create data URL from HTML
+			const tempDiv = document.createElement('div');
+			tempDiv.appendChild(element.cloneNode(true));
+
+			// Apply all computed styles
+			const elementStyles = window.getComputedStyle(element);
+			const cssText = Array.from(elementStyles).reduce((css, property) => {
+				return `${css}${property}:${elementStyles.getPropertyValue(property)};`;
+			}, '');
+
+			// Create an image from HTML
+			const data = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}">
+				<foreignObject width="100%" height="100%">
+					<div xmlns="http://www.w3.org/1999/xhtml">
+						<style>
+							.card-export-container {
+								width: ${canvas.width}px;
+								height: ${canvas.height}px;
+								${cssText}
+							}
+						</style>
+						<div class="card-export-container">${tempDiv.innerHTML}</div>
+					</div>
+				</foreignObject>
+			</svg>`;
+
+			const blob = new Blob([data], { type: 'image/svg+xml' });
+			const url = URL.createObjectURL(blob);
+
+			// Load image and draw to canvas
+			const image = new Image();
+			await new Promise((resolve, reject) => {
+				image.onload = resolve;
+				image.onerror = reject;
+				image.src = url;
+			});
+
+			context.drawImage(image, 0, 0, canvas.width, canvas.height);
+			URL.revokeObjectURL(url);
+
+			return canvas;
 		} catch (error) {
-			console.error('Error downloading image:', error);
-			throw new Error('Failed to download image. ' + error.message);
+			console.warn('HTML capture failed:', error);
+
+			// Create a basic representation of the card
+			context.fillStyle = backgroundColor;
+			context.fillRect(0, 0, canvas.width, canvas.height);
+
+			// Try to get some content from the element
+			const projectName = element.querySelector('#displayProjectName');
+			const username = element.querySelector('#displayUsername');
+			const repoName = element.querySelector('#displayRepoName');
+
+			context.fillStyle = window.getComputedStyle(element).color || '#ffffff';
+			context.font = 'bold 24px Arial';
+			context.fillText(projectName?.textContent || 'GitHub Project', 40, 80);
+
+			context.font = '16px Arial';
+			if (username?.textContent) {
+				context.fillText(`${username.textContent}${repoName?.textContent || ''}`, 40, 120);
+			}
+
+			return canvas;
+		}
+	}
+}
+
+/**
+ * PNG Exporter
+ * Implements the Liskov Substitution Principle (L)
+ */
+class PngExporter extends Exporter {
+	/**
+	 * Constructor
+	 * @param {HtmlCapture} capturer - HTML capturer
+	 */
+	constructor(capturer) {
+		super();
+		this.capturer = capturer || new HtmlCapture();
+	}
+
+	/**
+	 * Exports element as PNG
+	 * @param {HTMLElement} element - Element to export
+	 * @param {Object} options - Export options
+	 * @returns {Promise<string>} Data URL of the image
+	 */
+	async export(element, options = {}) {
+		try {
+			const canvas = await this.capturer.captureElement(element, options);
+			const dataUrl = canvas.toDataURL('image/png');
+
+			if (options.download && options.filename) {
+				this.downloadImage(dataUrl, options.filename + '.png');
+			}
+
+			return dataUrl;
+		} catch (error) {
+			console.error('PNG export failed:', error);
+			throw error;
 		}
 	}
 
 	/**
-	 * Valida y ajusta las dimensiones de exportación
-	 * @param {Object} dimensions - Dimensiones a validar {width, height}
-	 * @returns {Object} Dimensiones validadas
+	 * Downloads an image from a data URL
+	 * @param {string} dataUrl - Data URL of the image
+	 * @param {string} filename - Filename for download
+	 * @private
 	 */
-	validateExportDimensions(dimensions = {}) {
-		const defaultWidth = CONSTANTS.CARD_EXPORT.WIDTH;
-		const defaultHeight = CONSTANTS.CARD_EXPORT.HEIGHT;
+	downloadImage(dataUrl, filename) {
+		const link = document.createElement('a');
+		link.href = dataUrl;
+		link.download = filename;
+		link.style.display = 'none';
+		document.body.appendChild(link);
+		link.click();
+		setTimeout(() => {
+			document.body.removeChild(link);
+			window.URL.revokeObjectURL(dataUrl);
+		}, 100);
+	}
+}
 
-		let { width, height } = dimensions;
+/**
+ * JPEG Exporter
+ * Implements the Liskov Substitution Principle (L)
+ */
+class JpegExporter extends Exporter {
+	/**
+	 * Constructor
+	 * @param {HtmlCapture} capturer - HTML capturer
+	 */
+	constructor(capturer) {
+		super();
+		this.capturer = capturer || new HtmlCapture();
+	}
 
-		// Validar ancho
-		if (!width || isNaN(width) || width < 100) {
-			width = defaultWidth;
+	/**
+	 * Exports element as JPEG
+	 * @param {HTMLElement} element - Element to export
+	 * @param {Object} options - Export options
+	 * @returns {Promise<string>} Data URL of the image
+	 */
+	async export(element, options = {}) {
+		try {
+			const canvas = await this.capturer.captureElement(element, {
+				...options,
+				backgroundColor: options.backgroundColor || '#ffffff', // JPEG needs background
+			});
+
+			const quality = options.quality || 0.9;
+			const dataUrl = canvas.toDataURL('image/jpeg', quality);
+
+			if (options.download && options.filename) {
+				this.downloadImage(dataUrl, options.filename + '.jpg');
+			}
+
+			return dataUrl;
+		} catch (error) {
+			console.error('JPEG export failed:', error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Downloads an image from a data URL
+	 * @param {string} dataUrl - Data URL of the image
+	 * @param {string} filename - Filename for download
+	 * @private
+	 */
+	downloadImage(dataUrl, filename) {
+		const link = document.createElement('a');
+		link.href = dataUrl;
+		link.download = filename;
+		link.style.display = 'none';
+		document.body.appendChild(link);
+		link.click();
+		setTimeout(() => {
+			document.body.removeChild(link);
+			window.URL.revokeObjectURL(dataUrl);
+		}, 100);
+	}
+}
+
+/**
+ * Exporter factory
+ * Implements Factory pattern and Open/Closed Principle (O)
+ */
+class ExporterFactory {
+	/**
+	 * Creates an exporter based on format
+	 * @param {string} format - Export format ('png', 'jpeg')
+	 * @returns {Exporter} Exporter for the format
+	 */
+	static createExporter(format) {
+		const capturer = new HtmlCapture();
+
+		switch (format.toLowerCase()) {
+			case 'jpeg':
+			case 'jpg':
+				return new JpegExporter(capturer);
+			case 'png':
+			default:
+				return new PngExporter(capturer);
+		}
+	}
+}
+
+/**
+ * Main export service
+ * Implements the Dependency Inversion Principle (D)
+ */
+export class ExportService {
+	/**
+	 * Constructor
+	 * @param {Object} options - Configuration options
+	 */
+	constructor(options = {}) {
+		this.options = options;
+		this.preparationService = new ExportPreparationService();
+		this.isExporting = false;
+		this.lastError = null;
+	}
+
+	/**
+	 * Exports an element in the specified format
+	 * @param {HTMLElement} element - Element to export
+	 * @param {string} format - Format (png, jpeg)
+	 * @param {Object} options - Additional options
+	 * @returns {Promise<string>} Data URL of the image
+	 */
+	async exportElement(element, format = null, options = {}) {
+		if (this.isExporting) {
+			throw new Error('Export already in progress');
 		}
 
-		// Validar alto
-		if (!height || isNaN(height) || height < 100) {
-			height = defaultHeight;
-		}
+		try {
+			this.isExporting = true;
+			this.lastError = null;
 
-		// Mantener relación de aspecto 2:1 si se especifica solo una dimensión
-		if (dimensions.width && !dimensions.height) {
-			height = width / 2;
-		} else if (!dimensions.width && dimensions.height) {
-			width = height * 2;
-		}
+			// Determine export format
+			const exportFormat = format || 'png';
 
-		return { width, height };
+			// Create container and prepare element
+			const container = this.preparationService.createExportContainer();
+			document.body.appendChild(container);
+
+			// Clone and prepare element for export
+			const preparedElement = this.preparationService.prepareElementForExport(element);
+			container.appendChild(preparedElement);
+
+			// Ensure all images are loaded
+			await this.preparationService.ensureImagesLoaded(preparedElement);
+
+			// Get appropriate exporter
+			const exporter = ExporterFactory.createExporter(exportFormat);
+
+			// Export the element
+			const result = await exporter.export(preparedElement, options);
+
+			// Clean up
+			document.body.removeChild(container);
+
+			return result;
+		} catch (error) {
+			this.lastError = error.message || 'Export failed';
+			console.error('Export error:', error);
+			throw error;
+		} finally {
+			this.isExporting = false;
+		}
+	}
+
+	/**
+	 * Exports as PNG
+	 * @param {HTMLElement} element - Element to export
+	 * @param {Object} options - Export options
+	 * @returns {Promise<string>} Data URL
+	 */
+	async exportAsPng(element, options = {}) {
+		return this.exportElement(element, 'png', options);
+	}
+
+	/**
+	 * Exports as JPEG
+	 * @param {HTMLElement} element - Element to export
+	 * @param {Object} options - Export options
+	 * @returns {Promise<string>} Data URL
+	 */
+	async exportAsJpeg(element, options = {}) {
+		return this.exportElement(element, 'jpeg', options);
+	}
+
+	/**
+	 * Downloads the card as an image
+	 * @param {HTMLElement} element - Element to export as card
+	 * @param {string} filename - Download filename (optional)
+	 * @param {string} format - Image format ('png' or 'jpeg')
+	 * @param {Object} options - Additional export options
+	 * @returns {Promise<boolean>} True if download was successful
+	 */
+	async downloadCard(element, filename = 'github-card', format = 'png', options = {}) {
+		try {
+			// Verificar si html2canvas está disponible
+			if (typeof html2canvas !== 'function') {
+				throw new Error(
+					'html2canvas library is not available. Please reload the page and try again.'
+				);
+			}
+
+			// Validar elemento
+			if (!element) {
+				throw new Error('Card element not found');
+			}
+
+			// Combinar opciones con valores predeterminados de la configuración
+			const exportOptions = {
+				scale: CONSTANTS.CARD_EXPORT.SCALE || 2,
+				quality: CONSTANTS.CARD_EXPORT.QUALITY || 0.95,
+				...options,
+				download: true,
+				filename,
+			};
+
+			// Pequeña espera para asegurar que la UI esté actualizada
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			// Exportar en el formato solicitado
+			await this.exportElement(element, format, exportOptions);
+
+			return true;
+		} catch (error) {
+			this.lastError = error.message || 'Download failed';
+			console.error('Download error:', error);
+			return false;
+		}
+	}
+
+	/**
+	 * Gets the last error
+	 * @returns {string|null} Error message or null
+	 */
+	getLastError() {
+		return this.lastError;
+	}
+
+	/**
+	 * Checks if export is in progress
+	 * @returns {boolean} True if export is in progress
+	 */
+	getIsExporting() {
+		return this.isExporting;
 	}
 }
