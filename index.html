@@ -3,11 +3,14 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>GitCardX</title>
+		<title>GitCardX - GitHub Project Card Generator</title>
+		<meta
+			name="description"
+			content="Create beautiful project cards for your GitHub repositories and projects. Customize colors, add your branding, and download to share on social media." />
 		<link
-			href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+			href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
 			rel="stylesheet" />
-		<link rel="icon" href="/static/images/logo-github-card-generator.webp" />
+		<link rel="icon" href="./assets/favicon.ico" />
 		<link rel="stylesheet" href="./static/styles/style.css" />
 		<link
 			rel="stylesheet"
@@ -16,188 +19,267 @@
 	</head>
 	<body>
 		<header class="app-header">
-			<div class="logo-container">
-				<img
-					src="./static/images/logo-github-card-generator.webp"
-					alt="Logo"
-					class="app-logo" />
-				<h1>GitCardX</h1>
+			<div class="header-content">
+				<div class="logo-container">
+					<img
+						src="./assets/logo/github-card-generator.webp"
+						alt="GitCardX Logo"
+						class="app-logo" />
+					<div class="content-logo-text">
+						<a href="/" class="link-app-logo-title"
+							><h1 class="app-logo-title">GitCardX</h1></a
+						>
+						<span class="app-tagline">GitHub Card Generator</span>
+					</div>
+				</div>
+				<div class="header-actions">
+					<button class="header-btn" id="helpButton">
+						<i class="fas fa-question-circle"></i> Help
+					</button>
+					<button class="header-btn" id="resetForm">
+						<i class="fas fa-sync-alt"></i> Reset
+					</button>
+				</div>
 			</div>
 		</header>
 
 		<div class="container">
 			<div class="app-layout">
-				<!-- Panel izquierdo -->
+				<!-- Left panel: GitHub and Project Information -->
 				<div class="side-panel left-panel">
 					<div class="panel-section">
-						<h2><i class="fas fa-user"></i> GitHub Profile</h2>
+						<h2 class="panel-title"><i class="fab fa-github"></i> GitHub Profile</h2>
 						<div class="control-group">
-							<label for="username">GitHub Username:</label>
-							<div class="input-with-button">
+							<label for="username" class="control-label">GitHub Username</label>
+							<div class="control-row">
 								<input
 									type="text"
 									id="username"
-									placeholder="Enter your GitHub username" />
-								<button id="loadProfile" class="action-button">
+									placeholder="e.g. octocat"
+									class="control-field" />
+								<button id="loadProfile" class="btn btn-primary">
 									<i class="fas fa-download"></i> Load
 								</button>
 							</div>
+							<div class="helper-text card-info">
+								Enter your GitHub username to load your profile information
+							</div>
+						</div>
+
+						<div class="control-group">
+							<label for="repoName" class="control-label">Repository Name</label>
+							<input type="text" id="repoName" placeholder="e.g. awesome-project" />
+							<div class="helper-text card-info">
+								This will appear after your username in the card
+							</div>
 						</div>
 					</div>
 
 					<div class="panel-section">
-						<h2><i class="fas fa-project-diagram"></i> Project Information</h2>
+						<h2 class="panel-title">
+							<i class="fas fa-project-diagram"></i> Project Details
+						</h2>
 						<div class="control-group">
-							<label for="repoName">Repository Name:</label>
-							<input type="text" id="repoName" placeholder="Enter repository name" />
+							<label for="projectName" class="control-label">Project Name</label>
+							<input
+								type="text"
+								id="projectName"
+								placeholder="e.g. Awesome Project" />
+							<div class="helper-text card-info">
+								Main title that appears on the card
+							</div>
 						</div>
 
 						<div class="control-group">
-							<label for="projectName">Project Name:</label>
-							<input type="text" id="projectName" placeholder="Enter project name" />
-						</div>
-
-						<div class="control-group">
-							<label for="projectDescription">Project Description:</label>
+							<label for="projectDescription" class="control-label"
+								>Description</label
+							>
 							<textarea
 								id="projectDescription"
-								placeholder="Enter project description"
-								rows="4"></textarea>
-						</div>
-					</div>
-				</div>
-
-				<!-- Panel central (preview) -->
-				<div class="center-panel">
-					<div class="preview-header">
-						<h2><i class="fas fa-eye"></i> Preview</h2>
-						<div class="preview-actions">
-							<button id="generateCard" class="primary-button">
-								<i class="fas fa-sync-alt"></i> Update
-							</button>
-							<button id="downloadCard" class="download-button">
-								<i class="fas fa-download"></i> Download
-							</button>
-						</div>
-					</div>
-
-					<div id="cardContainer">
-						<div id="githubCard" class="card">
-							<div class="card-header">
-								<div class="repo-info">
-									<img
-										src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
-										alt="GitHub Logo"
-										class="github-logo" />
-									<span id="displayRepoName">/repository-name</span>
-								</div>
-								<div class="user-info">
-									<span id="displayUsername">username</span>
-									<img
-										id="profilePic"
-										src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
-										alt="Profile Picture"
-										class="profile-pic" />
-								</div>
-							</div>
-							<div class="card-body">
-								<p id="displayDescription" class="project-description"></p>
-							</div>
-							<div class="card-footer">
-								<h2 id="displayProjectName">Project Name</h2>
-								<div id="logoContainer" class="logo-container">
-									<!-- Project logo will be inserted here -->
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<div class="preview-footer">
-						<button id="resetForm" class="reset-button">
-							<i class="fas fa-undo"></i> Reset All
-						</button>
-					</div>
-				</div>
-
-				<!-- Panel derecho -->
-				<div class="side-panel right-panel">
-					<div class="panel-section">
-						<h2><i class="fas fa-palette"></i> Style Customization</h2>
-						<div class="control-group">
-							<label for="projectColor">Project Name Color:</label>
-							<div class="color-input-group">
-								<input type="color" id="projectColor" value="#ffffff" />
-								<span class="color-value">#ffffff</span>
+								rows="3"
+								placeholder="Brief description of your project"></textarea>
+							<div class="helper-text card-info">
+								Keep it concise, recommended max 280 characters
 							</div>
 						</div>
 
 						<div class="control-group">
-							<label for="borderColor">Bottom Border Color:</label>
-							<div class="color-input-group">
-								<input type="color" id="borderColor" value="#00a0ff" />
-								<span class="color-value">#00a0ff</span>
-							</div>
-						</div>
-
-						<div class="control-group">
-							<label for="bgColor">Background Color:</label>
-							<div class="color-input-group">
-								<input type="color" id="bgColor" value="#0d1117" />
-								<span class="color-value">#0d1117</span>
-							</div>
-						</div>
-					</div>
-
-					<div class="panel-section">
-						<h2><i class="fas fa-image"></i> Images</h2>
-						<div class="control-group">
-							<label for="projectLogo">Project Logo:</label>
+							<label class="control-label">Project Logo / Icon</label>
 							<div class="file-input-group">
 								<input
 									type="file"
 									id="projectLogo"
-									accept="image/*"
-									class="file-input" />
+									class="file-input"
+									accept="image/*" />
 								<label for="projectLogo" class="file-input-label">
 									<i class="fas fa-upload"></i> Choose File
 								</label>
-								<span class="file-name" id="projectLogoFileName"
-									>No file chosen</span
-								>
+								<button id="removeProjectLogo" class="btn btn-danger small-button">
+									<i class="fas fa-times"></i> Remove
+								</button>
+							</div>
+							<div id="projectLogoFileName" class="file-name">No file chosen</div>
+							<div class="helper-text card-info">
+								Appears in the bottom-right of the card
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Center Panel: Card Preview -->
+				<div class="center-panel">
+					<div class="preview-container">
+						<h2 class="panel-title"><i class="fas fa-eye"></i> Card Preview</h2>
+
+						<div class="preview-wrapper">
+							<div class="card-wrapper" id="cardWrapper">
+								<div class="card-content">
+									<div class="header">
+										<img
+											src="https://avatars.githubusercontent.com/u/0"
+											alt="Profile Picture"
+											class="avatar"
+											id="profilePic" />
+										<div class="info">
+											<h3 class="username" id="displayUsername">username</h3>
+											<div class="content-reponame">
+												<h1 class="repo-name" id="displayRepoName">
+													/repository-name
+												</h1>
+												<img
+													class="github-logo"
+													src="/assets/icons/github.svg" />
+											</div>
+										</div>
+									</div>
+									<p class="description" id="displayDescription"></p>
+									<div class="card-footer">
+										<h2 class="project-name" id="displayProjectName">
+											Project Name
+										</h2>
+										<div class="content-project-logo">
+											<img
+												src=""
+												alt="Project Logo"
+												class="project-logo"
+												id="displayProjectLogo" />
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="preview-actions">
+							<button id="updateCard" class="btn btn-primary">
+								<i class="fas fa-sync-alt"></i> Update Card
+							</button>
+							<button id="downloadCard" class="btn btn-primary">
+								<i class="fas fa-download"></i> Download as PNG
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<!-- Right Panel: Style Customization -->
+				<div class="side-panel right-panel">
+					<div class="panel-section">
+						<h2 class="panel-title"><i class="fas fa-palette"></i> Card Appearance</h2>
+
+						<div class="control-group">
+							<label for="projectColor" class="control-label"
+								>Project Name Color</label
+							>
+							<div class="color-input-group">
+								<input type="color" id="projectColor" value="#ffffff" />
+								<span class="color-value">#ffffff</span>
+							</div>
+							<div class="helper-text card-info">
+								Color for the main project title
 							</div>
 						</div>
 
 						<div class="control-group">
-							<label for="bgImage">Background Image:</label>
+							<label for="borderColor" class="control-label">Accent Color</label>
+							<div class="color-input-group">
+								<input type="color" id="borderColor" value="#3b82f6" />
+								<span class="color-value">#3b82f6</span>
+							</div>
+							<div class="helper-text card-info">
+								Used for visual highlights in the card
+							</div>
+						</div>
+
+						<div class="control-group">
+							<label for="bgColor" class="control-label">Background Color</label>
+							<div class="color-input-group">
+								<input type="color" id="bgColor" value="#10192a" />
+								<span class="color-value">#10192a</span>
+							</div>
+							<div class="helper-text card-info">
+								Main background color of the card
+							</div>
+						</div>
+					</div>
+
+					<div class="panel-section">
+						<h2 class="panel-title"><i class="fas fa-image"></i> Background Image</h2>
+
+						<div class="control-group">
+							<label class="control-label">Custom Background</label>
 							<div class="file-input-group">
 								<input
 									type="file"
 									id="bgImage"
-									accept="image/*"
-									class="file-input" />
+									class="file-input"
+									accept="image/*" />
 								<label for="bgImage" class="file-input-label">
-									<i class="fas fa-upload"></i> Choose File
+									<i class="fas fa-upload"></i> Choose Image
 								</label>
-								<span class="file-name" id="bgImageFileName">No file chosen</span>
-								<button id="removeBgImage" class="small-button">
-									<i class="fas fa-trash"></i> Remove
+								<button id="removeBgImage" class="btn btn-danger small-button">
+									<i class="fas fa-times"></i> Remove
 								</button>
+							</div>
+							<div id="bgImageFileName" class="file-name">No file chosen</div>
+							<div class="helper-text card-info">
+								Recommended size: 1280×640px or 2:1 ratio
 							</div>
 						</div>
 
-						<!-- Nuevo control de opacidad -->
-						<div class="control-group bg-opacity-group">
-							<label for="bgOpacity">Background Opacity:</label>
+						<div class="bg-opacity-group" id="bgOpacityGroup">
+							<label for="bgOpacity" class="control-label"
+								>Background Overlay Opacity</label
+							>
 							<div class="slider-container">
 								<input
 									type="range"
 									id="bgOpacity"
 									min="0"
-									max="100"
-									value="60"
+									max="1"
+									step="0.1"
+									value="0.6"
 									class="opacity-slider" />
-								<span class="opacity-value">60%</span>
+								<span class="opacity-value" id="bgOpacityValue">0.6</span>
 							</div>
+							<div class="helper-text">
+								Controls the dark overlay on your background image
+							</div>
+						</div>
+					</div>
+
+					<div class="panel-section">
+						<h2 class="panel-title">
+							<i class="fas fa-info-circle"></i> Card Information
+						</h2>
+						<div class="card-info">
+							<span class="dimension-label">Card Size:</span>
+							<span class="dimension-value">1280 × 640 pixels</span>
+							<div class="helper-text">Perfect for social media sharing</div>
+						</div>
+
+						<div class="actions">
+							<button id="resetButton" class="reset-button">
+								<i class="fas fa-undo"></i> Reset All Settings
+							</button>
 						</div>
 					</div>
 				</div>
@@ -206,106 +288,92 @@
 
 		<footer class="app-footer">
 			<div class="footer-content">
-				<div class="footer-logo animate-on-scroll">
-					<img
-						src="./static/images/logo-github-card-generator.webp"
-						alt="Logo"
-						class="footer-logo-img" />
-					<h3>GitCardX</h3>
+				<div class="footer-info">
+					<div class="footer-logo">
+						<img
+							src="./assets/logo/github-card-generator.webp"
+							alt="GitCardX Logo"
+							class="footer-logo-img" />
+						<h3>GitCardX</h3>
+					</div>
+					<p>Create beautiful project cards for your GitHub repositories</p>
+					<div class="disclaimer-message">
+						<i class="fas fa-lock"></i>
+						<p>
+							Este proyecto es educativo y forma parte de mi portafolio personal.
+							Utiliza datos públicos de la API de GitHub solo con fines demostrativos.
+						</p>
+					</div>
 				</div>
 
-				<div class="footer-links animate-on-scroll">
-					<h4>Links</h4>
+				<div class="footer-links">
+					<h4>Portafolio</h4>
 					<ul>
 						<li>
-							<a href="/" class="footer-link"> <i class="fas fa-home"></i> Home </a>
+							<!-- Change link and redirect to my portfolio/projects -->
+							<a
+								href="https://github.com/stars/sandovaldavid/lists/portforlio-projects"
+								class="footer-link"
+								target="_blank"
+								><i class="fab fa-github"></i> Mis Proyectos</a
+							>
 						</li>
 						<li>
 							<a
 								href="https://github.com/sandovaldavid/gitHub-project-card-generator"
+								class="footer-link"
 								target="_blank"
-								class="footer-link">
-								<i class="fas fa-code"></i> Source Code
-							</a>
+								><i class="fas fa-code"></i> Código Fuente</a
+							>
+						</li>
+						<li>
+							<a
+								href="https://docs.github.com/en/rest"
+								class="footer-link"
+								target="_blank"
+								><i class="fas fa-book"></i> API de GitHub</a
+							>
 						</li>
 					</ul>
 				</div>
 
-				<div class="footer-social animate-on-scroll">
-					<h4>Connect</h4>
+				<div class="footer-social">
+					<h4>Contacto</h4>
 					<div class="social-icons">
 						<a
 							href="https://github.com/sandovaldavid"
 							class="social-icon"
 							target="_blank"
-							title="GitHub">
-							<i class="fab fa-github"></i>
-						</a>
+							><i class="fab fa-github"></i
+						></a>
 						<a
-							href="https://x.com/XDavid2S"
+							href="https://linkedin.com/in/devsandoval"
 							class="social-icon"
 							target="_blank"
-							title="Twitter">
-							<i class="fab fa-twitter"></i>
-						</a>
-						<a
-							href="https://www.linkedin.com/in/jdavidsandovals/"
-							class="social-icon"
-							target="_blank"
-							title="LinkedIn">
-							<i class="fab fa-linkedin"></i>
-						</a>
-						<a href="#" class="social-icon" target="_blank" title="Instagram">
-							<i class="fab fa-instagram"></i>
-						</a>
-					</div>
-				</div>
-
-				<div class="footer-newsletter animate-on-scroll">
-					<h4>Newsletter</h4>
-					<p>Receive updates and news from this page</p>
-					<div class="newsletter-form">
-						<input type="email" placeholder="Tu email" class="newsletter-input" />
-						<button class="newsletter-button">
-							<i class="fas fa-paper-plane"></i>
-						</button>
+							><i class="fab fa-linkedin-in"></i
+						></a>
+						<a href="mailto:contact@devsandoval.me" class="social-icon" target="_blank"
+							><i class="fas fa-envelope"></i
+						></a>
 					</div>
 				</div>
 			</div>
 
 			<div class="footer-bottom">
 				<p>
-					&copy; <span id="current-year">2023</span> GitCardX | by
-					<a href="https://github.com/sandovaldavid" target="_blank">@sandovaldavid</a>
+					&copy; 2025 GitCardX | Project for Project Portfolio.
+					<!-- Change link and redirect to my portfolio -->
+					<a href="https://github.com/sandovaldavid">@sandovaldavid</a>
 				</p>
 			</div>
 		</footer>
 
-		<script>
-			document.getElementById('current-year').textContent = new Date().getFullYear();
-
-			// Animate elements on scroll
-			const elementsToAnimate = document.querySelectorAll('.animate-on-scroll');
-
-			const observerOptions = {
-				threshold: 0.1,
-				rootMargin: '0px 0px -50px 0px',
-			};
-
-			const observer = new IntersectionObserver(function (entries, observer) {
-				entries.forEach((entry) => {
-					if (entry.isIntersecting) {
-						entry.target.classList.add('appear');
-						observer.unobserve(entry.target);
-					}
-				});
-			}, observerOptions);
-
-			elementsToAnimate.forEach((element) => {
-				observer.observe(element);
-			});
-		</script>
-
-		<script type="module" src="static/js/app.js"></script>
+		<script type="module" src="./static/js/app.js"></script>
+		<!-- Add help modal container -->
+		<div id="helpModal" class="modal">
+			<div class="modal-content">
+				<!-- Content will be dynamically populated from config.js -->
+			</div>
+		</div>
 	</body>
 </html>
