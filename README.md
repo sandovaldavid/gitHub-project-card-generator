@@ -1,7 +1,12 @@
-# GitHub Project Card Generator: GitCardX
+# 🧠 GitCardX: Generador de Tarjetas para Proyectos GitHub
+
+**GitCardX** es una herramienta web que genera atractivas tarjetas de presentación para tus
+proyectos de GitHub. Permite personalizar colores, texto e imágenes, con vista previa en tiempo real
+y descarga en formato PNG de alta calidad.
 
 <div align="center">
-
+    <img src="assets/logo/github-card-generator.webp" alt="GitCardX Logo" width="100">
+    
 ![Version](https://img.shields.io/badge/version-2.0.1-blue.svg?cacheSeconds=2592000)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -9,157 +14,161 @@
 ![CSS](https://img.shields.io/badge/CSS-3-blue.svg)
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES6-yellow.svg)
 ![Responsive](https://img.shields.io/badge/Responsive-Yes-green.svg)
-
 </div>
 
-<div align="center">
-  <h1>GitCardX</h1>
-    <img src="assets/logo/github-card-generator.webp" alt="GitHub Card Generator Logo" width="100">
-</div>
+---
 
-Una herramienta web para generar atractivas tarjetas de presentación para tus proyectos de GitHub.
-Personaliza, previsualiza y descarga tarjetas en formato PNG con facilidad.
+## 📌 Descripción
 
-## ✨ Demo
+GitCardX resuelve el problema de presentación visual de proyectos GitHub, permitiendo crear tarjetas
+informativas y atractivas que pueden compartirse en perfiles, blogs o redes sociales. El generador
+ofrece una interfaz intuitiva que automatiza el proceso de diseño, eliminando la necesidad de
+herramientas gráficas complejas.
 
-<p align="center">
-  <img src="./assets/mockup/desktop.png" alt="Ejemplo de tarjeta generada" width="640">
-</p>
+La aplicación presenta una interfaz dividida en tres paneles: configuración, previsualización y
+personalización, con controles específicos para cada aspecto de la tarjeta. El resultado final es
+una imagen PNG de 1280×640px lista para usar en cualquier plataforma.
 
-## 🚀 Características
+---
 
--   **Personalización completa** de colores, texto e imágenes
--   **Carga automática** de información de perfil de GitHub
--   **Vista previa en tiempo real** mientras editas
--   **Descarga en formato PNG** de alta calidad (1280x640px)
--   **Diseño responsivo** funcional en dispositivos móviles y de escritorio
--   **Interfaz intuitiva** y fácil de usar
+## ✨ Características
 
-## 💻 Tecnologías utilizadas
+-   [x] **Carga de perfil GitHub** - Obtención automática de avatar y nombre de usuario
+-   [x] **Personalización de contenido** - Nombre de proyecto, repositorio y descripción
+        personalizable
+-   [x] **Selector de colores** - Personalización de colores para fondo, borde y texto
+-   [x] **Subida de imágenes** - Soporte para logo de proyecto y fondo personalizado
+-   [x] **Control de opacidad** - Ajuste del overlay para imágenes de fondo
+-   [x] **Vista previa en tiempo real** - Actualización instantánea al aplicar cambios
+-   [x] **Exportación a PNG** - Generación de imagen de alta calidad (1280×640px)
+-   [x] **Persistencia local** - Guardado automático de preferencias en localStorage
+-   [x] **Diseño responsivo** - Funcional en dispositivos móviles y de escritorio
+-   [x] **Sistema de notificaciones** - Feedback visual sobre acciones y errores
+-   [ ] **Exportación en múltiples formatos** - SVG, PDF (planificado)
 
--   HTML5
--   CSS3
--   JavaScript (ES6+)
--   [html2canvas](https://html2canvas.hertzen.com/) - Para convertir el HTML a imagen
--   [Font Awesome](https://fontawesome.com/) - Para los iconos de interfaz
--   [Google Fonts](https://fonts.google.com/) - Fuentes web Roboto
+---
 
-## 📋 Prerrequisitos
+## 🛠️ Tecnologías
 
--   Navegador web moderno (Chrome, Firefox, Edge, Safari)
--   Conexión a internet para cargar perfiles de GitHub
+-   **Frontend**:
+    -   HTML5 y CSS3 (Flexbox, Variables CSS)
+    -   JavaScript vanilla (ES6+)
+    -   Arquitectura modular basada en principios SOLID
+-   **Librerías**:
 
-## 🔧 Instalación y configuración local
+    -   [html2canvas](https://html2canvas.hertzen.com/) - Conversión HTML a imagen
+    -   [Font Awesome](https://fontawesome.com/) - Iconografía
+    -   [Google Fonts](https://fonts.google.com/) - Tipografía Roboto
 
-1. Clona el repositorio:
+-   **Almacenamiento**:
+    -   localStorage API - Persistencia de configuraciones
+-   **Integración**:
+    -   GitHub API - Obtención de información de perfiles
+-   **Desarrollo**:
+    -   Arquitectura modular de componentes
+    -   Diseño orientado a objetos
+    -   EventManager para comunicación entre módulos
+
+---
+
+## ⚙️ Instalación
+
+El proyecto no requiere proceso de construcción, al ser una aplicación web estática:
 
 ```bash
+# Clonar el repositorio
 git clone https://github.com/sandovaldavid/github-project-card-generator.git
-```
 
-2. Navega al directorio del proyecto:
-
-```bash
+# Navegar al directorio
 cd github-project-card-generator
-```
 
-3. Abre el archivo index.html en tu navegador o usa un servidor local:
-
-```bash
-# Si tienes Python instalado
+# Opcional: iniciar un servidor local con Python
 python -m http.server 8000
 
-# Si tienes Node.js instalado
+# Opcional: iniciar un servidor local con Node.js
 npx serve
 ```
 
-## 📘 Cómo usar
+---
+
+## 🚀 Uso
 
 1. **Información de GitHub**
 
-    - Introduce tu nombre de usuario de GitHub y haz clic en "Load" para cargar automáticamente tu
-      imagen de perfil.
+    - Introduce tu nombre de usuario y haz clic en "Load" para cargar tu imagen de perfil.
 
 2. **Información del proyecto**
 
-    - Añade el nombre del repositorio, nombre del proyecto y una descripción.
+    - Completa el nombre del repositorio, título del proyecto y descripción.
 
 3. **Personalización**
 
-    - Selecciona colores para el nombre del proyecto, borde inferior y fondo.
-    - Sube el logo de tu proyecto (opcional).
-    - Añade una imagen de fondo personalizada (opcional).
+    - Selecciona colores para el título, borde y fondo.
+    - Sube logo del proyecto y/o imagen de fondo (opcional).
+    - Ajusta la opacidad del overlay si añades fondo.
 
-4. **Previsualización**
+4. **Previsualización y Descarga**
+    - Haz clic en "Apply Changes" para actualizar la vista previa.
+    - Haz clic en "Download as PNG" para descargar la tarjeta como imagen.
 
-    - Verifica cómo se ve tu tarjeta en la sección de vista previa.
-    - Haz clic en "Update Card" para aplicar los cambios.
+---
 
-5. **Descarga**
-    - Haz clic en "Download as PNG" para guardar tu tarjeta como imagen.
+## 🖼️ Capturas de Pantalla
 
-## 🎨 Personalización
+<p align="center">
+  <img src="./assets/mockup/desktop.png" alt="Interfaz de GitCardX" width="800">
+</p>
 
-La tarjeta tiene dimensiones de 1280x640px, con un área visible de relación 2:1. Las opciones de
-personalización incluyen:
+---
 
--   **Colores**: Fondo, borde inferior y texto del nombre del proyecto
--   **Imágenes**: Logo del proyecto y fondo personalizado
--   **Texto**: Nombre de usuario, nombre del repositorio, nombre del proyecto y descripción
+## 📁 Estructura del Proyecto
 
-## 🌐 Despliegue
+La aplicación sigue una arquitectura modular organizada por responsabilidades:
 
-Este proyecto puede desplegarse en cualquier servicio de alojamiento web estático:
-
-### GitHub Pages
-
-1. Haz fork de este repositorio
-2. Activa GitHub Pages desde la configuración del repositorio
-3. Selecciona la rama `main` como fuente
-
-### Netlify
-
-1. Regístrate en [Netlify](https://www.netlify.com/)
-2. Arrastra y suelta la carpeta del proyecto o conecta con tu repositorio de GitHub
-3. ¡Listo! Netlify generará una URL para tu aplicación
-
-### Vercel
-
-```bash
-# Instala Vercel CLI
-npm i -g vercel
-
-# Despliega
-vercel
 ```
+📦 root/
+ ┣ 📂assets/               # Recursos estáticos
+ ┃ ┣ 📂icons/              # Iconos de la aplicación
+ ┃ ┣ 📂logo/               # Logo del proyecto
+ ┃ ┗ 📂mockup/             # Imágenes de ejemplo
+ ┣ 📂static/
+ ┃ ┣ 📂js/                 # Lógica JavaScript
+ ┃ ┃ ┣ 📂components/       # Componentes UI
+ ┃ ┃ ┣ 📂core/             # Núcleo de la aplicación
+ ┃ ┃ ┣ 📂services/         # Servicios (GitHub, exportación)
+ ┃ ┃ ┗ 📂utils/            # Utilidades
+ ┃ ┗ 📂styles/             # Estilos CSS
+ ┃   ┗ 📂components/       # Estilos modulares
+ ┣ 📜index.html            # Punto de entrada
+ ┗ 📜README.md             # Documentación
+```
+
+---
 
 ## 🤝 Contribuciones
 
-Las contribuciones son bienvenidas. Para contribuir:
+Las contribuciones son bienvenidas, sigue estos pasos:
 
 1. Haz un fork del proyecto
-2. Crea una rama para tu función (`git checkout -b feature/amazing-feature`)
+2. Crea una rama con tu funcionalidad (`git checkout -b feature/amazing-feature`)
 3. Haz commit de tus cambios (`git commit -m 'Add some amazing feature'`)
-4. Push a la rama (`git push origin feature/amazing-feature`)
+4. Sube los cambios (`git push origin feature/amazing-feature`)
 5. Abre un Pull Request
 
-## 📜 Licencia
+---
 
-Este proyecto está licenciado bajo la Licencia MIT - consulta el archivo LICENSE para más detalles.
+## 🪪 Licencia
 
-## ✍️ Autor
+Este proyecto está bajo la licencia MIT. Ver el archivo LICENSE para más información.
 
-**David Sandoval**
+---
 
+## 👨‍💻 Autor
+
+-   **David Sandoval** - [Portfolio](https://devsandoval.me/)
 -   GitHub: [@sandovaldavid](https://github.com/sandovaldavid)
 -   LinkedIn: [@devsandoval](https://linkedin.com/in/devsandoval)
 -   Email: [contact@devsandoval.me](mailto:contact@devsandoval.me)
-
-## 📌 Notas adicionales
-
--   La aplicación utiliza la API pública de GitHub para cargar información del perfil
--   Las imágenes se procesan localmente sin subirse a ningún servidor
--   Asegúrate de tener una conexión a internet estable al cargar perfiles de GitHub
 
 ---
 
@@ -168,6 +177,6 @@ Este proyecto está licenciado bajo la Licencia MIT - consulta el archivo LICENS
     ¿Te gusta este proyecto? ¡Dale una ⭐️!
   </p>
   <p>
-    © 2025 GitHub Project Card Generator
+    © 2025 GitCardX
   </p>
 </div>
