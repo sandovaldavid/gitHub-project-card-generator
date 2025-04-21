@@ -62,7 +62,7 @@ class BackgroundImageManager {
 		const file = e.target.files[0];
 
 		// Verify if it's an image
-		if (!file.type.match('image.*')) {
+		if (!validateImageFile(file)) {
 			this.dispatchEvent('error', {
 				message: 'File must be an image',
 			});
@@ -77,7 +77,7 @@ class BackgroundImageManager {
 
 			// Update UI
 			this.updateImage(event.target.result);
-			this.updateFileName(file.name);
+			this.updateFileNameWithPreview(file.name, event.target.result);
 			this.updateOpacityControlVisibility();
 
 			// Notify change
@@ -95,6 +95,53 @@ class BackgroundImageManager {
 		};
 
 		reader.readAsDataURL(file);
+	}
+
+	/**
+	 * Updates the displayed file name with preview
+	 * @param {string} fileName - File name
+	 * @param {string} previewUrl - Image preview URL
+	 */
+	updateFileNameWithPreview(fileName, previewUrl) {
+		if (this.fileName) {
+			// Clear previous content
+			this.fileName.innerHTML = '';
+
+			// Create and add thumbnail image
+			if (previewUrl) {
+				const thumbnail = document.createElement('img');
+				thumbnail.src = previewUrl;
+				thumbnail.alt = 'Preview';
+				thumbnail.className = 'image-preview';
+				this.fileName.appendChild(thumbnail);
+			}
+
+			// Add file name text
+			const nameSpan = document.createElement('span');
+			nameSpan.textContent = fileName || 'No file chosen';
+			this.fileName.appendChild(nameSpan);
+
+			// Add file size if available
+			if (this.input.files && this.input.files[0]) {
+				const fileSizeElement = document.createElement('span');
+				fileSizeElement.className = 'file-size';
+
+				const fileSize = this.input.files[0].size;
+				fileSizeElement.textContent = this.formatFileSize(fileSize);
+				this.fileName.appendChild(fileSizeElement);
+			}
+		}
+	}
+
+	/**
+	 * Format file size to human readable format
+	 * @param {number} bytes - File size in bytes
+	 * @returns {string} Formatted size
+	 */
+	formatFileSize(bytes) {
+		if (bytes < 1024) return bytes + ' B';
+		else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+		else return (bytes / 1048576).toFixed(1) + ' MB';
 	}
 
 	/**
