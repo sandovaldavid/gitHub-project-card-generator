@@ -82,6 +82,34 @@ function setupEventListeners(app) {
 	// Create confirmation modal instance
 	const confirmationModal = new ConfirmationModal();
 
+	// Handle update card button state
+	const updateCardButton = document.getElementById('updateCard');
+	const formInputs = document.querySelectorAll(
+		'#username, #repoName, #projectName, #projectDescription'
+	);
+
+	// Monitor form changes to enable/disable "Apply Changes" button
+	let formState = {};
+
+	// Initialize form state with current values
+	formInputs.forEach((input) => {
+		formState[input.id] = input.value;
+	});
+
+	// Detect changes in form inputs
+	formInputs.forEach((input) => {
+		input.addEventListener('input', () => {
+			const hasChanges = Array.from(formInputs).some((input) => {
+				return input.value !== formState[input.id];
+			});
+
+			// Enable/disable the update button based on changes
+			if (updateCardButton) {
+				updateCardButton.disabled = !hasChanges;
+			}
+		});
+	});
+
 	// Button to load GitHub profile
 	eventManager.setupDOMEvent('#loadProfile', 'click', async (event) => {
 		const usernameInput = document.getElementById('username');
@@ -90,8 +118,13 @@ function setupEventListeners(app) {
 			return;
 		}
 
-		const loadProfileBtn = event.target;
+		const loadProfileBtn = event.target.closest('button');
+
+		// Add loading state to button
 		loadProfileBtn.disabled = true;
+		loadProfileBtn.classList.add('loading');
+		loadProfileBtn.innerHTML = '<i class="fas fa-circle-notch"></i> Loading...';
+
 		try {
 			const userData = await githubService.getUserData(usernameInput.value.trim());
 			cardManager.setUserData(userData);
@@ -113,10 +146,17 @@ function setupEventListeners(app) {
 			});
 
 			notificationSystem.success('GitHub profile loaded successfully');
+
+			// Update form state after successful load
+			formState['username'] = userData.login;
+			updateCardButton.disabled = true;
 		} catch (error) {
 			notificationSystem.error(error.message);
 		} finally {
+			// Remove loading state
 			loadProfileBtn.disabled = false;
+			loadProfileBtn.classList.remove('loading');
+			loadProfileBtn.innerHTML = '<i class="fas fa-download"></i> Load';
 		}
 	});
 
@@ -146,6 +186,12 @@ function setupEventListeners(app) {
 			storageService.saveItem('card', data);
 
 			notificationSystem.success('Card updated successfully');
+
+			// Update form state and disable button after applying changes
+			formInputs.forEach((input) => {
+				formState[input.id] = input.value;
+			});
+			updateCardButton.disabled = true;
 		} catch (error) {
 			if (error.errors) {
 				const errorMessages = Object.values(error.errors).join('. ');
@@ -157,22 +203,15 @@ function setupEventListeners(app) {
 		}
 	});
 
-	// Real-time repository name updates
-	eventManager.setupDOMEvent('#repoName', 'input', (event) => {
-		const repoName = event.target.value || '';
-		try {
-			cardManager.update({ repoName });
-			// We don't save to settings every time there's a change to avoid overloading storage
-		} catch (error) {
-			// We don't show errors in real-time to avoid bothering the user
-			console.debug('Real-time update validation error:', error);
-		}
-	});
-
 	// Button to download card
 	eventManager.setupDOMEvent('#downloadCard', 'click', async (event) => {
+		const downloadBtn = event.target.closest('button');
+
 		try {
-			event.target.disabled = true;
+			downloadBtn.disabled = true;
+			downloadBtn.classList.add('loading');
+			downloadBtn.innerHTML = '<i class="fas fa-circle-notch"></i> Generating...';
+
 			notificationSystem.info('Preparing your card for download...');
 
 			// Get the card element
@@ -190,12 +229,39 @@ function setupEventListeners(app) {
 			}
 
 			notificationSystem.success('Card downloaded successfully');
+
+			// Show success state on button
+			downloadBtn.classList.remove('loading');
+			downloadBtn.classList.add('success');
+			downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download as PNG';
+
+			// Reset button state after a delay
+			setTimeout(() => {
+				downloadBtn.classList.remove('success');
+			}, 3000);
 		} catch (error) {
 			notificationSystem.error(`Error exporting card: ${error.message}`);
 			console.error('Export error:', error);
 		} finally {
-			event.target.disabled = false;
+			// Reset button state if there was an error
+			if (downloadBtn.classList.contains('loading')) {
+				downloadBtn.classList.remove('loading');
+				downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download as PNG';
+			}
+			downloadBtn.disabled = false;
 		}
+	});
+
+	// Reset colors button
+	eventManager.setupDOMEvent('#resetColors', 'click', () => {
+		// Reset to default colors
+		colorPicker.resetToDefaults();
+
+		// Clear color settings
+		storageService.saveItem('colors', null);
+
+		// Notify user
+		notificationSystem.info('Colors have been reset to defaults');
 	});
 
 	// Reset button in header
@@ -217,6 +283,12 @@ function setupEventListeners(app) {
 
 				// Clear settings
 				settingsManager.clearSettings();
+
+				// Update form state after reset
+				formInputs.forEach((input) => {
+					formState[input.id] = input.value;
+				});
+				updateCardButton.disabled = true;
 
 				notificationSystem.info('All settings have been reset');
 			}
@@ -243,6 +315,12 @@ function setupEventListeners(app) {
 				// Clear settings
 				settingsManager.clearSettings();
 
+				// Update form state after reset
+				formInputs.forEach((input) => {
+					formState[input.id] = input.value;
+				});
+				updateCardButton.disabled = true;
+
 				notificationSystem.info('All settings have been reset');
 			}
 		);
@@ -258,6 +336,14 @@ function setupEventListeners(app) {
 		// Apply changes based on updated settings
 		if (category === 'card') {
 			cardManager.applySettings(settings);
+
+			// Update form state after applying settings
+			formInputs.forEach((input) => {
+				if (settings[input.id]) {
+					formState[input.id] = settings[input.id];
+				}
+			});
+			updateCardButton.disabled = true;
 		} else if (category === 'appearance') {
 			colorPicker.setColors(settings);
 		}
