@@ -233,7 +233,9 @@
 	align-items: center;
 	background-color: var(--bg-sections);
 	border-radius: 12px;
-	padding: 1.5rem;
+	padding: 1.8rem;
+	position: relative;
+	box-shadow: var(--box-shadow);
 }
 
 .preview-wrapper {
@@ -242,19 +244,25 @@
 	overflow: hidden;
 	position: relative;
 	margin: 0 auto;
-	border-radius: 8px;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	border-radius: 10px;
+	box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 	background-color: var(--bg-color);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: transform 0.3s ease;
+}
+
+.preview-wrapper:hover {
+	transform: scale(1.01);
 }
 
 .card-wrapper {
 	width: 1280px;
 	height: 640px;
 	transform: scale(0.5);
-	transform-origin: top left;
+	transform-origin: center center;
 	position: absolute;
-	top: 0;
-	left: 0;
 	background-color: var(--bg-color);
 	overflow: hidden;
 }
@@ -263,8 +271,9 @@
 	display: flex;
 	justify-content: center;
 	gap: 1rem;
-	margin-top: 1rem;
+	margin-top: 1.5rem;
 	width: 100%;
+	max-width: 600px;
 }
 
 /* Card content styles based on specifications */
@@ -420,7 +429,6 @@
 
 	.card-footer {
 		min-height: 100px;
-		padding-bottom: 60px;
 	}
 
 	.project-logo {
