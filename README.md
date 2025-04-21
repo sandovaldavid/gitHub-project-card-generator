@@ -1,5 +1,9 @@
 # 🧠 GitCardX: Generador de Tarjetas para Proyectos GitHub
 
+<div align="right">
+    <a href="README.en.md">English</a>
+</div>
+
 **GitCardX** es una herramienta web que genera atractivas tarjetas de presentación para tus
 proyectos de GitHub. Permite personalizar colores, texto e imágenes, con vista previa en tiempo real
 y descarga en formato PNG de alta calidad.
@@ -7,7 +11,7 @@ y descarga en formato PNG de alta calidad.
 <div align="center">
     <img src="assets/logo/github-card-generator.webp" alt="GitCardX Logo" width="100">
     
-![Version](https://img.shields.io/badge/version-2.0.1-blue.svg?cacheSeconds=2592000)
+![Version](https://img.shields.io/badge/version-3.0.1-blue.svg?cacheSeconds=2592000)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![HTML](https://img.shields.io/badge/HTML-5-orange.svg)
