@@ -189,18 +189,6 @@
 	color: var(--project-text-color);
 }
 
-/* Project description */
-.project-description {
-	font-size: 1.5rem;
-	line-height: 1.5;
-	color: var(--text-light);
-	max-width: 80%;
-	margin: 0 auto;
-	text-align: justify;
-	opacity: 0.9;
-	font-family: var(--primary-font);
-}
-
 /* Project logo */
 .content-project-logo {
 	height: 100px;
@@ -338,7 +326,7 @@
 }
 
 .description {
-	font-size: 1.75rem;
+	font-size: 2rem;
 	line-height: 1.5;
 	color: #c9d1d9;
 	margin-top: 0;
