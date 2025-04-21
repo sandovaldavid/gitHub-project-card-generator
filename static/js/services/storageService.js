@@ -8,13 +8,13 @@ import {
 } from '../../utils/validators.js';
 
 /**
- * Servicio para gestionar el almacenamiento persistente de datos
- * Maneja guardado y carga de preferencias del usuario
+ * Service for managing persistent data storage
+ * Handles saving and loading of user preferences
  */
 export class StorageService {
 	/**
-	 * Inicializa el servicio con una clave de almacenamiento
-	 * @param {string} storageKey - Clave para guardar datos en localStorage
+	 * Initializes the service with a storage key
+	 * @param {string} storageKey - Key to store data in localStorage
 	 */
 	constructor(storageKey = CONSTANTS.STORAGE_KEY) {
 		this.storageKey = storageKey;
@@ -22,8 +22,8 @@ export class StorageService {
 	}
 
 	/**
-	 * Comprueba si localStorage está disponible en el navegador
-	 * @returns {boolean} True si localStorage está disponible
+	 * Checks if localStorage is available in the browser
+	 * @returns {boolean} True if localStorage is available
 	 */
 	checkStorageAvailability() {
 		try {
@@ -38,18 +38,18 @@ export class StorageService {
 	}
 
 	/**
-	 * Guarda preferencias del usuario
-	 * @param {Object} data - Datos a guardar
-	 * @returns {boolean} True si se guardó correctamente
+	 * Saves user preferences
+	 * @param {Object} data - Data to save
+	 * @returns {boolean} True if saved successfully
 	 */
 	save(data) {
 		if (!this.isStorageAvailable || !data) return false;
 
 		try {
-			// Validar datos antes de guardar
+			// Validate data before saving
 			const cleanData = this.validateAndSanitizeData(data);
 
-			// Guardar datos validados
+			// Save validated data
 			localStorage.setItem(this.storageKey, JSON.stringify(cleanData));
 			return true;
 		} catch (error) {
@@ -59,8 +59,8 @@ export class StorageService {
 	}
 
 	/**
-	 * Carga preferencias del usuario
-	 * @returns {Object|null} Datos guardados o null si no hay datos
+	 * Loads user preferences
+	 * @returns {Object|null} Saved data or null if no data
 	 */
 	load() {
 		if (!this.isStorageAvailable) return null;
@@ -69,20 +69,18 @@ export class StorageService {
 			const storedData = localStorage.getItem(this.storageKey);
 			if (!storedData) return null;
 
+			// Parse and validate stored data
 			const parsedData = JSON.parse(storedData);
-
-			// Validar datos cargados
 			return this.validateAndSanitizeData(parsedData);
 		} catch (error) {
 			console.error('Error loading data:', error);
-			this.clear(); // Borrar datos corruptos
 			return null;
 		}
 	}
 
 	/**
-	 * Elimina datos guardados
-	 * @returns {boolean} True si se eliminaron correctamente
+	 * Removes saved data
+	 * @returns {boolean} True if deleted successfully
 	 */
 	clear() {
 		if (!this.isStorageAvailable) return false;
@@ -97,110 +95,81 @@ export class StorageService {
 	}
 
 	/**
-	 * Guarda un valor específico
-	 * @param {string} key - Clave del valor
-	 * @param {any} value - Valor a guardar
-	 * @returns {boolean} True si se guardó correctamente
+	 * Saves a specific value
+	 * @param {string} key - Key of the value
+	 * @param {any} value - Value to save
+	 * @returns {boolean} True if saved successfully
 	 */
 	saveItem(key, value) {
 		if (!this.isStorageAvailable || !key) return false;
 
 		try {
+			// Load existing data first
 			const currentData = this.load() || {};
+
+			// Update with new value
 			currentData[key] = value;
+
+			// Save updated data
 			return this.save(currentData);
 		} catch (error) {
-			console.error(`Error saving ${key}:`, error);
+			console.error('Error saving item:', error);
 			return false;
 		}
 	}
 
 	/**
-	 * Carga un valor específico
-	 * @param {string} key - Clave del valor a cargar
-	 * @param {any} defaultValue - Valor por defecto si no existe
-	 * @returns {any} Valor guardado o defaultValue
+	 * Loads a specific value
+	 * @param {string} key - Key of the value to load
+	 * @param {any} defaultValue - Default value if none exists
+	 * @returns {any} Saved value or defaultValue
 	 */
 	loadItem(key, defaultValue = null) {
 		if (!this.isStorageAvailable || !key) return defaultValue;
 
 		try {
 			const data = this.load();
-			return data && data[key] !== undefined ? data[key] : defaultValue;
+			return data && key in data ? data[key] : defaultValue;
 		} catch (error) {
-			console.error(`Error loading ${key}:`, error);
+			console.error('Error loading item:', error);
 			return defaultValue;
 		}
 	}
 
 	/**
-	 * Valida y sanitiza los datos antes de guardar/después de cargar
-	 * @param {Object} data - Datos a validar
-	 * @returns {Object} Datos validados y sanitizados
+	 * Validates and sanitizes data before saving/after loading
+	 * @param {Object} data - Data to validate
+	 * @returns {Object} Validated and sanitized data
 	 */
 	validateAndSanitizeData(data) {
 		const cleanData = {};
 
-		// Procesar colores
+		// Process colors
 		if (data.colors) {
 			cleanData.colors = {};
-
-			// Validar cada color
-			const colorKeys = ['projectColor', 'borderColor', 'bgColor'];
-			colorKeys.forEach((key) => {
-				if (data.colors[key]) {
-					const validation = validateColor(data.colors[key]);
-					if (validation.isValid) {
-						cleanData.colors[key] = data.colors[key];
-					} else {
-						// Usar color por defecto si es inválido
-						cleanData.colors[key] =
-							CONSTANTS.UI.DEFAULT_COLORS[key.toUpperCase().replace('COLOR', '')];
-					}
+			Object.entries(data.colors).forEach(([colorKey, colorValue]) => {
+				// Only save valid colors
+				if (typeof colorValue === 'string' && colorValue.startsWith('#')) {
+					cleanData.colors[colorKey] = colorValue;
 				}
 			});
 		}
 
-		// Procesar datos de la tarjeta
+		// Process card data
 		if (data.card) {
 			cleanData.card = {};
+			const cardFields = ['username', 'repoName', 'projectName', 'projectDescription'];
 
-			// Validar username
-			if (data.card.username) {
-				const validation = validateGitHubUsername(data.card.username);
-				if (validation.isValid) {
-					cleanData.card.username = data.card.username;
+			cardFields.forEach((field) => {
+				if (typeof data.card[field] === 'string') {
+					cleanData.card[field] = data.card[field];
 				}
-			}
-
-			// Validar nombre de repositorio
-			if (data.card.repoName !== undefined) {
-				const validation = validateRepoName(data.card.repoName);
-				if (validation.isValid) {
-					cleanData.card.repoName = data.card.repoName;
-				}
-			}
-
-			// Validar nombre de proyecto
-			if (data.card.projectName !== undefined) {
-				const validation = validateProjectName(data.card.projectName);
-				if (validation.isValid) {
-					cleanData.card.projectName = data.card.projectName;
-				}
-			}
-
-			// Validar descripción
-			if (data.card.projectDescription !== undefined) {
-				const validation = validateDescription(data.card.projectDescription);
-				if (validation.isValid) {
-					cleanData.card.projectDescription = data.card.projectDescription;
-				}
-			}
+			});
 		}
 
-		// Copiar otras propiedades que no requieren validación especial
+		// Copy other properties that don't require special validation
 		Object.entries(data).forEach(([key, value]) => {
-			if (key !== 'colors' && key !== 'card') {
+			if (!['colors', 'card'].includes(key)) {
 				cleanData[key] = value;
 			}
 		});
@@ -209,55 +178,90 @@ export class StorageService {
 	}
 
 	/**
-	 * Migra datos de versiones anteriores de la aplicación
-	 * @returns {boolean} True si se migró correctamente o no era necesario
+	 * Migrates data from older application versions
+	 * @returns {boolean} True if migrated successfully or not needed
 	 */
 	migrateFromOldVersions() {
 		if (!this.isStorageAvailable) return false;
 
 		try {
-			// Intentar migrar desde versiones anteriores si existen
-			const oldKey = 'github-card-preferences'; // Ejemplo de clave antigua
+			// Check for old data format
+			const oldStorageKey = 'github-card-generator-settings';
+			const oldData = localStorage.getItem(oldStorageKey);
 
-			if (localStorage.getItem(oldKey)) {
-				const oldData = JSON.parse(localStorage.getItem(oldKey));
-				this.save(this.convertOldDataFormat(oldData));
-				localStorage.removeItem(oldKey);
-				return true;
+			if (!oldData) return true; // No old data to migrate
+
+			// Parse old data
+			const parsedOldData = JSON.parse(oldData);
+
+			// Convert to new format
+			const newData = this.convertOldDataFormat(parsedOldData);
+
+			// Save in new format
+			const saveResult = this.save(newData);
+
+			// Delete old data if migration succeeded
+			if (saveResult) {
+				localStorage.removeItem(oldStorageKey);
 			}
 
-			return true; // No era necesario migrar
+			return saveResult;
 		} catch (error) {
-			console.error('Error migrating data:', error);
+			console.error('Error migrating old data:', error);
 			return false;
 		}
 	}
 
 	/**
-	 * Convierte el formato de datos antiguos al nuevo formato
-	 * @param {Object} oldData - Datos en formato antiguo
-	 * @returns {Object} Datos en nuevo formato
+	 * Converts old data format to new format
+	 * @param {Object} oldData - Data in old format
+	 * @returns {Object} Data in new format
 	 * @private
 	 */
 	convertOldDataFormat(oldData) {
-		// Implementar según el formato antiguo específico
-		// Este es un ejemplo genérico:
+		// This is a generic example:
 		const newData = {
 			colors: {},
 			card: {},
 		};
 
 		if (oldData) {
-			// Mapeo de colores
-			if (oldData.projectColor) newData.colors.projectColor = oldData.projectColor;
-			if (oldData.borderColor) newData.colors.borderColor = oldData.borderColor;
-			if (oldData.bgColor) newData.colors.bgColor = oldData.bgColor;
+			// Handle specific old format fields
+			if (oldData.projectColor) {
+				newData.colors.projectColor = oldData.projectColor;
+			}
 
-			// Mapeo de datos de tarjeta
-			if (oldData.username) newData.card.username = oldData.username;
-			if (oldData.repoName) newData.card.repoName = oldData.repoName;
-			if (oldData.projectName) newData.card.projectName = oldData.projectName;
-			if (oldData.description) newData.card.projectDescription = oldData.description;
+			if (oldData.accentColor) {
+				newData.colors.borderColor = oldData.accentColor;
+			}
+
+			if (oldData.bgColor) {
+				newData.colors.bgColor = oldData.bgColor;
+			}
+
+			// Map old card data
+			['username', 'repoName', 'projectName', 'projectDescription'].forEach((field) => {
+				if (oldData[field]) {
+					newData.card[field] = oldData[field];
+				}
+			});
+
+			// Copy any other fields
+			Object.entries(oldData).forEach(([key, value]) => {
+				if (
+					![
+						'projectColor',
+						'accentColor',
+						'bgColor',
+						'username',
+						'repoName',
+						'projectName',
+						'projectDescription',
+					].includes(key)
+				) {
+					newData[key] = value;
+				}
+			});
 		}
 
 		return newData;
