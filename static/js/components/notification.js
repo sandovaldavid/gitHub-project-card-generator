@@ -3,255 +3,231 @@ import { sanitizeText } from '../../utils/validators.js';
 import { createElement, addStylesheet, updateClassList } from '../../utils/domUtils.js';
 
 /**
- * Sistema de notificaciones para toda la aplicación
- * Maneja la creación, visualización y eliminación de notificaciones
+ * Enhanced Notification System
+ * Provides visual feedback to users about actions and errors
  */
 export class NotificationSystem {
 	/**
-	 * Constructor que inicializa el sistema de notificaciones
-	 * @param {Object} options - Opciones de configuración
+	 * Create a new notification system
+	 * @param {Object} options - Configuration options
 	 */
 	constructor(options = {}) {
-		this.activeNotification = null;
-		this.position = options.position || 'top-right';
-		this.duration = options.duration || CONSTANTS.UI.NOTIFICATION_DURATION || 3000;
-		this.container = null;
+		this.options = {
+			position: options.position || CONSTANTS.NOTIFICATION.POSITION,
+			duration: options.duration || CONSTANTS.NOTIFICATION.DURATION,
+			maxNotifications: options.maxNotifications || CONSTANTS.NOTIFICATION.MAX_NOTIFICATIONS,
+			container: null,
+			animations: true,
+			...options,
+		};
 
-		// Inicializar estilos
-		this.initStyles();
-
-		// Crear contenedor para notificaciones
-		this.createContainer();
-
-		// Hacer el sistema accesible globalmente para componentes sin acceso directo
-		window.notificationSystem = this;
+		this.notifications = [];
+		this.initialize();
 	}
 
 	/**
-	 * Inicializa los estilos CSS para las notificaciones
+	 * Initialize the notification system
 	 */
-	initStyles() {
-		if (!document.getElementById('notification-styles-check')) {
-			// Solo añadimos un marcador para saber que la inicialización ocurrió
-			const marker = document.createElement('meta');
-			marker.id = 'notification-styles-check';
-			document.head.appendChild(marker);
+	initialize() {
+		// Create the notification container if it doesn't exist
+		const existingContainer = document.querySelector('.notification-container');
+
+		if (existingContainer) {
+			this.options.container = existingContainer;
+		} else {
+			this.options.container = document.createElement('div');
+			this.options.container.className = `notification-container ${this.options.position}`;
+			document.body.appendChild(this.options.container);
 		}
 	}
 
 	/**
-	 * Crea el contenedor para las notificaciones
-	 */
-	createContainer() {
-		// Verificar si el contenedor ya existe
-		let container = document.querySelector('.notification-container');
-		if (!container) {
-			// Usar createElement de domUtils
-			container = createElement('div', {
-				className: `notification-container ${this.position}`,
-			});
-			document.body.appendChild(container);
-		}
-		this.container = container;
-	}
-
-	/**
-	 * Muestra una notificación
-	 * @param {string} message - Mensaje a mostrar
-	 * @param {string} type - Tipo de notificación ('success', 'error', 'warning', 'info')
-	 * @param {Object} options - Opciones adicionales
-	 * @returns {HTMLElement} Elemento de notificación creado
+	 * Display a notification
+	 * @param {string} message - Message to display
+	 * @param {string} type - Notification type: success, error, warning, info
+	 * @param {Object} options - Additional options like duration, actions, etc.
+	 * @returns {string} ID of the created notification
 	 */
 	show(message, type = 'info', options = {}) {
-		// Si hay una validación fallida, procesar el mensaje adecuadamente
-		if (type === 'error' && typeof message === 'object' && message.errors) {
-			message = this.formatValidationErrors(message.errors);
-		} else {
-			// Sanitizar texto para prevenir XSS
-			message = typeof message === 'string' ? sanitizeText(message) : String(message);
+		// Validate type
+		const validTypes = ['success', 'error', 'warning', 'info'];
+		if (!validTypes.includes(type)) {
+			type = 'info';
 		}
 
-		// Seleccionar icono apropiado
-		let iconContent = '';
-		switch (type) {
-			case 'success':
-				iconContent = '<i class="fas fa-check-circle"></i>';
-				break;
-			case 'error':
-				iconContent = '<i class="fas fa-exclamation-circle"></i>';
-				break;
-			case 'warning':
-				iconContent = '<i class="fas fa-exclamation-triangle"></i>';
-				break;
-			case 'info':
-				iconContent = '<i class="fas fa-info-circle"></i>';
-				break;
-		}
+		// Combine options
+		const notificationOptions = {
+			...this.options,
+			...options,
+		};
 
-		// Crear icono usando createElement
-		const icon = createElement('div', {
-			className: 'notification-icon',
-			innerHTML: iconContent,
+		// Create notification element
+		const notification = document.createElement('div');
+		const id = `notification-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+		notification.id = id;
+		notification.className = `notification ${type}`;
+
+		// Determine icon based on type
+		const icons = {
+			success: '<i class="fas fa-check-circle"></i>',
+			error: '<i class="fas fa-exclamation-circle"></i>',
+			warning: '<i class="fas fa-exclamation-triangle"></i>',
+			info: '<i class="fas fa-info-circle"></i>',
+		};
+
+		// Build content
+		const content = `
+			${icons[type]}
+			<div class="notification-content">
+				<div class="notification-message">${sanitizeText(message)}</div>
+			</div>
+			<button class="notification-close" aria-label="Close notification">
+				<i class="fas fa-times"></i>
+			</button>
+		`;
+
+		notification.innerHTML = content;
+
+		// Display the notification
+		this.options.container.appendChild(notification);
+
+		// Add to active notifications list
+		this.notifications.push({
+			id,
+			element: notification,
+			timeout: null,
 		});
 
-		// Crear contenido
-		const content = createElement('div', {
-			className: 'content',
-			innerHTML: message,
-		});
+		// Limit the number of notifications
+		this.enforceMaxNotifications();
 
-		// Crear botón de cierre
-		const closeBtn =
-			options.dismissible !== false
-				? createElement('button', {
-						className: 'close-btn',
-						innerHTML: '<i class="fas fa-times"></i>',
-						onclick: (e) => {
-							e.stopPropagation();
-							this.hide(notification);
-						},
-				  })
-				: null;
+		// Add interactive behavior
+		this.setupNotificationBehavior(id, notificationOptions.duration);
 
-		// Crear notificación usando createElement
-		const notification = createElement('div', {
-			className: `notification ${type}`,
-			onclick: () => this.hide(notification),
-		});
-
-		// Agregar elementos a la notificación
-		notification.appendChild(icon);
-		notification.appendChild(content);
-		if (closeBtn) notification.appendChild(closeBtn);
-
-		// Agregar al contenedor
-		this.container.appendChild(notification);
-
-		// Animar entrada
+		// Show with animation
 		setTimeout(() => {
-			updateClassList(notification, {
-				'fade-in': true,
-			});
+			notification.classList.add('show');
 		}, 10);
 
-		// Configurar auto-cierre si no es error o si se especifica
-		const duration = options.duration || this.duration;
-		if (type !== 'error' || options.autoClose !== false) {
-			setTimeout(() => {
-				if (notification.parentNode) {
-					this.hide(notification);
-				}
+		return id;
+	}
+
+	/**
+	 * Configure interactive behavior for a notification
+	 * @param {string} id - Notification ID
+	 * @param {number} duration - Duration in milliseconds
+	 */
+	setupNotificationBehavior(id, duration) {
+		const notification = this.getNotificationById(id);
+		if (!notification) return;
+
+		// Configure close button
+		const closeBtn = notification.element.querySelector('.notification-close');
+		if (closeBtn) {
+			closeBtn.addEventListener('click', () => this.close(id));
+		}
+
+		// Configure timeout
+		if (duration > 0) {
+			notification.timeout = setTimeout(() => {
+				this.close(id);
 			}, duration);
 		}
 
-		return notification;
-	}
-
-	/**
-	 * Formatea los errores de validación para mostrarlos en una notificación
-	 * @param {Object} errors - Objeto con errores de validación
-	 * @returns {string} Mensaje HTML formateado
-	 */
-	formatValidationErrors(errors) {
-		if (typeof errors === 'string') return sanitizeText(errors);
-
-		if (Object.keys(errors).length === 1) {
-			return sanitizeText(Object.values(errors)[0]);
-		}
-
-		const errorItems = Object.entries(errors)
-			.map(([field, message]) => `<li>${sanitizeText(message)}</li>`)
-			.join('');
-
-		return `<strong>Por favor corrige los siguientes errores:</strong><ul>${errorItems}</ul>`;
-	}
-
-	/**
-	 * Oculta una notificación específica
-	 * @param {HTMLElement} notification - Elemento a ocultar
-	 */
-	hide(notification = this.activeNotification) {
-		if (!notification) return;
-
-		// Usar updateClassList de domUtils
-		updateClassList(notification, {
-			'fade-out': true,
-			'fade-in': false,
+		// Pause timeout on mouse hover
+		notification.element.addEventListener('mouseenter', () => {
+			if (notification.timeout) {
+				clearTimeout(notification.timeout);
+				notification.timeout = null;
+			}
 		});
 
+		// Resume timeout on mouse leave
+		notification.element.addEventListener('mouseleave', () => {
+			if (duration > 0 && !notification.timeout) {
+				notification.timeout = setTimeout(() => {
+					this.close(id);
+				}, duration);
+			}
+		});
+	}
+
+	/**
+	 * Close a specific notification
+	 * @param {string} id - ID of notification to close
+	 */
+	close(id) {
+		const notification = this.getNotificationById(id);
+		if (!notification) return;
+
+		// Clear timeout if exists
+		if (notification.timeout) {
+			clearTimeout(notification.timeout);
+		}
+
+		// Animate exit
+		notification.element.classList.remove('show');
+
+		// Remove after animation
 		setTimeout(() => {
-			if (notification.parentNode) {
-				notification.parentNode.removeChild(notification);
+			if (notification.element.parentNode) {
+				notification.element.parentNode.removeChild(notification.element);
 			}
-			if (this.activeNotification === notification) {
-				this.activeNotification = null;
-			}
+			// Remove from list
+			this.notifications = this.notifications.filter((n) => n.id !== id);
 		}, 300);
 	}
 
 	/**
-	 * Elimina todas las notificaciones activas
+	 * Close all notifications
 	 */
-	clearAll() {
-		const notifications = this.container.querySelectorAll('.notification');
-		notifications.forEach((notification) => {
-			this.hide(notification);
+	closeAll() {
+		this.notifications.forEach((notification) => {
+			this.close(notification.id);
 		});
 	}
 
 	/**
-	 * Muestra una notificación de éxito
-	 * @param {string} message - Mensaje a mostrar
-	 * @param {Object} options - Opciones adicionales
-	 * @returns {HTMLElement} Elemento de notificación
+	 * Get a notification object by its ID
+	 * @param {string} id - Notification ID
+	 * @returns {Object|null} Notification object or null
+	 */
+	getNotificationById(id) {
+		return this.notifications.find((notification) => notification.id === id) || null;
+	}
+
+	/**
+	 * Enforce maximum number of notifications
+	 */
+	enforceMaxNotifications() {
+		if (this.notifications.length > this.options.maxNotifications) {
+			// Close the oldest ones
+			const toRemove = this.notifications.slice(
+				0,
+				this.notifications.length - this.options.maxNotifications
+			);
+			toRemove.forEach((notification) => {
+				this.close(notification.id);
+			});
+		}
+	}
+
+	/**
+	 * Convenience methods for specific notification types
 	 */
 	success(message, options = {}) {
 		return this.show(message, 'success', options);
 	}
 
-	/**
-	 * Muestra una notificación de error
-	 * @param {string|Object} message - Mensaje o objeto de error a mostrar
-	 * @param {Object} options - Opciones adicionales
-	 * @returns {HTMLElement} Elemento de notificación
-	 */
 	error(message, options = {}) {
 		return this.show(message, 'error', options);
 	}
 
-	/**
-	 * Muestra una notificación de advertencia
-	 * @param {string} message - Mensaje a mostrar
-	 * @param {Object} options - Opciones adicionales
-	 * @returns {HTMLElement} Elemento de notificación
-	 */
 	warning(message, options = {}) {
 		return this.show(message, 'warning', options);
 	}
 
-	/**
-	 * Muestra una notificación de información
-	 * @param {string} message - Mensaje a mostrar
-	 * @param {Object} options - Opciones adicionales
-	 * @returns {HTMLElement} Elemento de notificación
-	 */
 	info(message, options = {}) {
 		return this.show(message, 'info', options);
-	}
-
-	/**
-	 * Reemplaza la función de notificación en index.js
-	 * Método estático para migrar código antiguo
-	 * @param {string} message - Mensaje a mostrar
-	 * @param {string} type - Tipo de notificación
-	 */
-	static showNotification(message, type) {
-		if (window.notificationSystem) {
-			window.notificationSystem.show(message, type);
-		} else {
-			// Crear instancia temporal si no existe
-			const tempSystem = new NotificationSystem();
-			tempSystem.show(message, type);
-		}
 	}
 }
