@@ -4,21 +4,119 @@ import {
 	validateDescription,
 	validateGitHubUsername,
 } from '../../utils/validators.js';
-import {
-	applyStyles,
-} from '../../utils/domUtils.js';
+import { applyStyles } from '../../utils/domUtils.js';
 import { CONSTANTS } from '../config.js';
+import { ICardState, ICardRenderer, ICardValidator, ICardManager } from './cardInterfaces.js';
 
 /**
- * Clase responsable de gestionar la tarjeta principal de GitHub
- * Maneja la actualización, validación y manipulación del contenido de la tarjeta
+ * Class responsible for managing the card state
+ * Implements the Single Responsibility Principle (SRP) and Interface Segregation (ISP)
  */
-export class CardManager {
+class CardState extends ICardState {
 	/**
-	 * Constructor que inicializa el administrador de tarjetas
+	 * Constructor for the state class
+	 * @param {Object} initialState - Initial card state
 	 */
-	constructor() {
-		this.elements = this.cacheElements();
+	constructor(initialState = {}) {
+		super();
+		this.state = {
+			username: '',
+			repoName: '',
+			projectName: 'Project Name',
+			projectDescription: '',
+			profileLoaded: false,
+			...initialState,
+		};
+
+		this.subscribers = [];
+	}
+
+	/**
+	 * Updates the state
+	 * @param {Object} newState - New partial state
+	 */
+	update(newState) {
+		if (!newState) return;
+
+		const oldState = { ...this.state };
+		this.state = { ...this.state, ...newState };
+
+		// Notify all subscribers
+		this.notifySubscribers(oldState, this.state);
+
+		return this.state;
+	}
+
+	/**
+	 * Gets a specific property from the state
+	 * @param {string} property - Property name
+	 * @returns {any} Property value
+	 */
+	getProperty(property) {
+		return this.state[property];
+	}
+
+	/**
+	 * Sets a specific property in the state
+	 * @param {string} property - Property name
+	 * @param {any} value - Property value
+	 * @returns {boolean} True if the update was successful
+	 */
+	setProperty(property, value) {
+		if (property === undefined) return false;
+
+		const oldState = { ...this.state };
+		this.state[property] = value;
+		this.notifySubscribers(oldState, this.state);
+		return true;
+	}
+
+	/**
+	 * Gets all state properties
+	 * @returns {Object} Complete state
+	 */
+	getAllProperties() {
+		return { ...this.state };
+	}
+
+	/**
+	 * Gets the current state
+	 * @returns {Object} Current state
+	 */
+	getState() {
+		return { ...this.state };
+	}
+
+	/**
+	 * Subscribes a function to state changes
+	 * @param {Function} callback - Function to call when state changes
+	 */
+	subscribe(callback) {
+		if (typeof callback !== 'function') return;
+		this.subscribers.push(callback);
+
+		// Return function to unsubscribe
+		return () => {
+			this.subscribers = this.subscribers.filter((cb) => cb !== callback);
+		};
+	}
+
+	/**
+	 * Notifies all subscribers about state changes
+	 * @param {Object} oldState - Previous state
+	 * @param {Object} newState - New state
+	 */
+	notifySubscribers(oldState, newState) {
+		this.subscribers.forEach((callback) => {
+			callback(newState, oldState);
+		});
+	}
+
+	/**
+	 * Resets the state to initial values
+	 */
+	reset() {
+		const oldState = { ...this.state };
 		this.state = {
 			username: '',
 			repoName: '',
@@ -26,49 +124,99 @@ export class CardManager {
 			projectDescription: '',
 			profileLoaded: false,
 		};
+		this.notifySubscribers(oldState, this.state);
+	}
+}
 
-		// Inicialización
-		this.init();
+/**
+ * Class responsible for validating card data
+ * Implements the Single Responsibility Principle (SRP) and Interface Segregation (ISP)
+ */
+class CardValidator extends ICardValidator {
+	/**
+	 * Validates the card data
+	 * @param {Object} data - Data to validate
+	 * @returns {Object} Validation result {isValid, errors}
+	 */
+	validate(data) {
+		const errors = {};
+		let isValid = true;
+
+		if (data.repoName !== undefined) {
+			const validation = this.validateProperty('repoName', data.repoName);
+			if (!validation.isValid) {
+				errors.repoName = validation.message;
+				isValid = false;
+			}
+		}
+
+		if (data.projectName !== undefined) {
+			const validation = this.validateProperty('projectName', data.projectName);
+			if (!validation.isValid) {
+				errors.projectName = validation.message;
+				isValid = false;
+			}
+		}
+
+		if (data.projectDescription !== undefined) {
+			const validation = this.validateProperty('projectDescription', data.projectDescription);
+			if (!validation.isValid) {
+				errors.projectDescription = validation.message;
+				isValid = false;
+			}
+		}
+
+		if (data.username !== undefined) {
+			const validation = this.validateProperty('username', data.username);
+			if (!validation.isValid) {
+				errors.username = validation.message;
+				isValid = false;
+			}
+		}
+
+		return { isValid, errors };
 	}
 
 	/**
-	 * Inicializa el componente
+	 * Validates a specific property
+	 * @param {string} property - Property name
+	 * @param {any} value - Value to validate
+	 * @returns {Object} Validation result {isValid, message}
 	 */
-	init() {
-		this.renderInitialState();
-		this.adjustCardScale();
+	validateProperty(property, value) {
+		switch (property) {
+			case 'repoName':
+				return validateRepoName(value);
+			case 'projectName':
+				return validateProjectName(value);
+			case 'projectDescription':
+				return validateDescription(value);
+			case 'username':
+				return validateGitHubUsername(value);
+			default:
+				return { isValid: true, message: '' };
+		}
+	}
+}
 
-		// Agregar listener para redimensionar la tarjeta al cambiar el tamaño de la ventana
-		window.addEventListener('resize', () => this.adjustCardScale());
+/**
+ * Class responsible for rendering card interface changes
+ * Implements the Single Responsibility Principle (SRP) and Interface Segregation (ISP)
+ */
+class CardRenderer extends ICardRenderer {
+	/**
+	 * Constructor for the renderer
+	 * @param {Object} elements - References to card DOM elements
+	 */
+	constructor(elements) {
+		super();
+		this.elements = elements;
 	}
 
 	/**
-	 * Obtiene referencias a los elementos del DOM
-	 * @returns {Object} Referencias a los elementos del DOM
+	 * Renders the initial card state
 	 */
-	cacheElements() {
-		return {
-			// Elementos de visualización de la tarjeta
-			card: document.getElementById('githubCard'),
-			cardContainer: document.getElementById('cardContainer'),
-			displayUsername: document.getElementById('displayUsername'),
-			profilePic: document.getElementById('profilePic'),
-			displayRepoName: document.getElementById('displayRepoName'),
-			displayProjectName: document.getElementById('displayProjectName'),
-			displayDescription: document.getElementById('displayDescription'),
-
-			// Elementos de entrada de datos
-			usernameInput: document.getElementById('username'),
-			repoNameInput: document.getElementById('repoName'),
-			projectNameInput: document.getElementById('projectName'),
-			projectDescriptionInput: document.getElementById('projectDescription'),
-		};
-	}
-
-	/**
-	 * Renderiza el estado inicial de la tarjeta
-	 */
-	renderInitialState() {
+	renderInitial() {
 		if (this.elements.displayUsername) {
 			this.elements.displayUsername.textContent = 'username';
 		}
@@ -85,86 +233,76 @@ export class CardManager {
 			this.elements.displayDescription.textContent = '';
 			this.elements.displayDescription.style.display = 'none';
 		}
+
+		if (this.elements.profilePic) {
+			this.elements.profilePic.src = CONSTANTS.GITHUB_API.DEFAULT_AVATAR;
+		}
 	}
 
 	/**
-	 * Actualiza la tarjeta con la información proporcionada
-	 * @param {Object} data - Datos para actualizar la tarjeta
+	 * Renders the card with provided data
+	 * @param {Object} cardData - Card data
+	 * @param {HTMLElement} container - Optional container
+	 * @returns {HTMLElement} Card element
 	 */
-	update(data = {}) {
-		// Validar datos de entrada
-		this.validateCardData(data);
+	render(cardData, container = null) {
+		if (!cardData) return null;
 
-		// Actualizar el estado interno
-		Object.assign(this.state, data);
-
-		// Actualizar el repositorio
-		this.updateRepositoryName(data.repoName);
-
-		// Actualizar el nombre del proyecto
-		this.updateProjectName(data.projectName);
-
-		// Actualizar la descripción
-		this.updateDescription(data.projectDescription);
-
-		// Actualizar el nombre de usuario si se proporciona y el perfil no está cargado
-		if (data.username && !this.state.profileLoaded) {
-			this.updateUsername(data.username);
-		}
-
-		// Asegurarse de que la tarjeta tenga las dimensiones correctas
+		this.updateUsername(cardData.username);
+		this.updateRepositoryName(cardData.repoName);
+		this.updateProjectName(cardData.projectName);
+		this.updateDescription(cardData.projectDescription);
 		this.adjustCardScale();
 
-		return true;
+		return this.elements.card;
 	}
 
 	/**
-	 * Valida los datos de la tarjeta
-	 * @param {Object} data - Datos a validar
-	 * @throws {Error} Si algún dato es inválido
+	 * Updates specific parts of the card
+	 * @param {Object} updates - Data to update
+	 * @returns {HTMLElement} Card element
 	 */
-	validateCardData(data) {
-		const errors = {};
+	updateCard(updates) {
+		if (!updates) return null;
 
-		if (data.repoName !== undefined) {
-			const repoValidation = validateRepoName(data.repoName);
-			if (!repoValidation.isValid) {
-				errors.repoName = repoValidation.message;
-			}
+		if (updates.username !== undefined) {
+			this.updateUsername(updates.username);
 		}
 
-		if (data.projectName !== undefined) {
-			const projectNameValidation = validateProjectName(data.projectName);
-			if (!projectNameValidation.isValid) {
-				errors.projectName = projectNameValidation.message;
-			}
+		if (updates.repoName !== undefined) {
+			this.updateRepositoryName(updates.repoName);
 		}
 
-		if (data.projectDescription !== undefined) {
-			const descValidation = validateDescription(data.projectDescription);
-			if (!descValidation.isValid) {
-				errors.projectDescription = descValidation.message;
-			}
+		if (updates.projectName !== undefined) {
+			this.updateProjectName(updates.projectName);
 		}
 
-		if (data.username !== undefined) {
-			const usernameValidation = validateGitHubUsername(data.username);
-			if (!usernameValidation.isValid) {
-				errors.username = usernameValidation.message;
-			}
+		if (updates.projectDescription !== undefined) {
+			this.updateDescription(updates.projectDescription);
 		}
 
-		// Si hay errores, lanzar excepción
-		if (Object.keys(errors).length > 0) {
-			const error = new Error('Invalid card data');
-			error.errors = errors;
-			throw error;
+		if (updates.avatar_url !== undefined) {
+			this.updateAvatar(updates.avatar_url);
+		}
+
+		this.adjustCardScale();
+
+		return this.elements.card;
+	}
+
+	/**
+	 * Updates the username on the card
+	 * @param {string} username - Username to display
+	 */
+	updateUsername(username) {
+		if (this.elements.displayUsername) {
+			this.elements.displayUsername.textContent = username || 'username';
 		}
 	}
 
 	/**
-	 * Actualiza el nombre del repositorio en la tarjeta
-	 * @param {string} repoName - Nombre del repositorio
+	 * Updates the repository name on the card
+	 * @param {string} repoName - Repository name to display
 	 */
 	updateRepositoryName(repoName) {
 		if (this.elements.displayRepoName) {
@@ -175,8 +313,8 @@ export class CardManager {
 	}
 
 	/**
-	 * Actualiza el nombre del proyecto en la tarjeta
-	 * @param {string} projectName - Nombre del proyecto
+	 * Updates the project name on the card
+	 * @param {string} projectName - Project name to display
 	 */
 	updateProjectName(projectName) {
 		if (this.elements.displayProjectName) {
@@ -185,15 +323,15 @@ export class CardManager {
 	}
 
 	/**
-	 * Actualiza la descripción del proyecto en la tarjeta
-	 * @param {string} description - Descripción del proyecto
+	 * Updates the project description on the card
+	 * @param {string} description - Description to display
 	 */
 	updateDescription(description) {
 		if (this.elements.displayDescription) {
-			// Actualizar contenido
+			// Update content
 			this.elements.displayDescription.textContent = description || '';
 
-			// Ajustar visibilidad según si hay descripción o no
+			// Adjust visibility based on whether there is a description
 			applyStyles(this.elements.displayDescription, {
 				display: description ? 'block' : 'none',
 			});
@@ -201,17 +339,17 @@ export class CardManager {
 	}
 
 	/**
-	 * Actualiza el nombre de usuario en la tarjeta
-	 * @param {string} username - Nombre de usuario
+	 * Updates the user avatar
+	 * @param {string} avatarUrl - Avatar URL
 	 */
-	updateUsername(username) {
-		if (this.elements.displayUsername) {
-			this.elements.displayUsername.textContent = username || 'username';
+	updateAvatar(avatarUrl) {
+		if (this.elements.profilePic) {
+			this.elements.profilePic.src = avatarUrl || CONSTANTS.GITHUB_API.DEFAULT_AVATAR;
 		}
 	}
 
 	/**
-	 * Ajusta la escala de la tarjeta para que se vea bien en la pantalla
+	 * Adjusts the card scale for optimal viewing
 	 */
 	adjustCardScale() {
 		const card = this.elements.card;
@@ -219,56 +357,232 @@ export class CardManager {
 
 		if (!card || !container) return;
 
-		// Asegurarse de que la tarjeta llene su contenedor naturalmente
+		// Ensure the card fills its container naturally
 		applyStyles(card, {
 			width: '100%',
 			height: '100%',
 		});
 
-		// Asegurarse de que el nombre de usuario sea visible
+		// Ensure username is visible
 		if (this.elements.displayUsername) {
 			applyStyles(this.elements.displayUsername, {
 				display: 'block',
 			});
 		}
 	}
+}
+
+/**
+ * Main class that manages the GitHub card
+ * Implements the Facade pattern to coordinate various responsibilities
+ * and implements the ICardManager interface
+ */
+export class CardManager extends ICardManager {
+	/**
+	 * Constructor that initializes the card manager
+	 * @param {ICardValidator} validator - Card validator
+	 * @param {ICardState} stateManager - State manager
+	 * @param {ICardRenderer} renderer - Card renderer
+	 */
+	constructor(validator = null, stateManager = null, renderer = null) {
+		super();
+		this.elements = this.cacheElements();
+
+		// Dependency injection (DIP)
+		this.validator = validator || new CardValidator();
+		this.stateManager = stateManager || new CardState();
+		this.renderer = renderer || new CardRenderer(this.elements);
+
+		// Unique ID for the current card
+		this.currentCardId = `card-${Date.now()}`;
+
+		// Initialization
+		this.init();
+	}
 
 	/**
-	 * Establece los datos de usuario de GitHub
-	 * @param {Object} userData - Datos del usuario de GitHub
+	 * Initializes the component
+	 */
+	init() {
+		this.renderer.renderInitial();
+		this.renderer.adjustCardScale();
+
+		// Add listener to resize the card when window size changes
+		window.addEventListener('resize', () => {
+			this.renderer.adjustCardScale();
+		});
+
+		// Subscribe to state changes
+		this.stateManager.subscribe((newState) => {
+			this.renderer.updateCard(newState);
+		});
+	}
+
+	/**
+	 * Gets references to DOM elements
+	 * @returns {Object} References to DOM elements
+	 */
+	cacheElements() {
+		return {
+			// Card display elements
+			card: document.getElementById('githubCard'),
+			cardContainer: document.getElementById('cardContainer'),
+			displayUsername: document.getElementById('displayUsername'),
+			profilePic: document.getElementById('profilePic'),
+			displayRepoName: document.getElementById('displayRepoName'),
+			displayProjectName: document.getElementById('displayProjectName'),
+			displayDescription: document.getElementById('displayDescription'),
+
+			// Data input elements
+			usernameInput: document.getElementById('username'),
+			repoNameInput: document.getElementById('repoName'),
+			projectNameInput: document.getElementById('projectName'),
+			projectDescriptionInput: document.getElementById('projectDescription'),
+		};
+	}
+
+	/**
+	 * Creates a new card with the provided data
+	 * @param {Object} cardData - Initial card data
+	 * @returns {string} ID of the created card
+	 */
+	createCard(cardData) {
+		// Validate input data
+		const validation = this.validator.validate(cardData);
+		if (!validation.isValid) {
+			const error = new Error('Invalid card data');
+			error.errors = validation.errors;
+			throw error;
+		}
+
+		// Generate a new unique ID
+		this.currentCardId = `card-${Date.now()}`;
+
+		// Update state
+		this.stateManager.update(cardData);
+
+		// Return the ID
+		return this.currentCardId;
+	}
+
+	/**
+	 * Updates an existing card
+	 * @param {string} cardId - Card ID
+	 * @param {Object} updates - Data to update
+	 * @returns {boolean} True if the update was successful
+	 */
+	updateCard(cardId, updates) {
+		// Verify it's the current card
+		if (cardId !== this.currentCardId) {
+			throw new Error(`Card with ID ${cardId} not found`);
+		}
+
+		// Validate update data only if not empty
+		// Filter properties for validation (ignore empty strings)
+		const dataToValidate = {};
+		Object.entries(updates).forEach(([key, value]) => {
+			// Only validate values that aren't empty strings
+			if (value !== '' || typeof value !== 'string') {
+				dataToValidate[key] = value;
+			}
+		});
+
+		// Validate only if there's data to validate
+		if (Object.keys(dataToValidate).length > 0) {
+			const validation = this.validator.validate(dataToValidate);
+			if (!validation.isValid) {
+				const error = new Error('Invalid card data for update');
+				error.errors = validation.errors;
+				throw error;
+			}
+		}
+
+		// Update state with all data, even empty ones
+		this.stateManager.update(updates);
+
+		return true;
+	}
+
+	/**
+	 * Gets a card by its ID
+	 * @param {string} cardId - Card ID
+	 * @returns {Object} Card data
+	 */
+	getCard(cardId) {
+		// Verify it's the current card
+		if (cardId !== this.currentCardId) {
+			throw new Error(`Card with ID ${cardId} not found`);
+		}
+
+		return this.stateManager.getAllProperties();
+	}
+
+	/**
+	 * Renders a card in a container
+	 * @param {string} cardId - Card ID
+	 * @param {HTMLElement} container - Container for rendering
+	 * @returns {HTMLElement} Rendered card element
+	 */
+	renderCard(cardId, container) {
+		// Verify it's the current card
+		if (cardId !== this.currentCardId) {
+			throw new Error(`Card with ID ${cardId} not found`);
+		}
+
+		const cardData = this.stateManager.getAllProperties();
+		return this.renderer.render(cardData, container);
+	}
+
+	/**
+	 * Updates the card with the provided information
+	 * @param {Object} data - Data to update the card
+	 * @returns {boolean} True if the update was successful
+	 * @throws {Error} If there are validation errors
+	 */
+	update(data = {}) {
+		// Preserve avatar URL if it exists in the current state
+		const currentState = this.stateManager.getAllProperties();
+		if (currentState.avatar_url && !data.avatar_url) {
+			data.avatar_url = currentState.avatar_url;
+		}
+
+		return this.updateCard(this.currentCardId, data);
+	}
+
+	/**
+	 * Sets GitHub user data
+	 * @param {Object} userData - GitHub user data
 	 */
 	setUserData(userData) {
 		if (!userData) return;
 
-		// Establecer imagen de perfil
-		if (userData.avatar_url && this.elements.profilePic) {
-			this.elements.profilePic.src = userData.avatar_url;
+		// Update avatar
+		if (userData.avatar_url) {
+			this.renderer.updateAvatar(userData.avatar_url);
 		}
 
-		// Establecer nombre de usuario
-		if (userData.login && this.elements.displayUsername) {
-			this.elements.displayUsername.textContent = userData.login;
+		// Update state with user data
+		this.stateManager.update({
+			username: userData.login,
+			avatar_url: userData.avatar_url, // Save avatar URL in state
+			profileLoaded: true,
+		});
 
-			// Actualizar también el campo de entrada
-			if (this.elements.usernameInput) {
-				this.elements.usernameInput.value = userData.login;
-			}
+		// Also update the input field if it exists
+		if (this.elements.usernameInput) {
+			this.elements.usernameInput.value = userData.login;
 		}
-
-		// Marcar que el perfil ha sido cargado
-		this.state.profileLoaded = true;
-		this.state.username = userData.login || '';
 	}
 
 	/**
-	 * Aplica configuraciones guardadas a la tarjeta
-	 * @param {Object} settings - Configuraciones guardadas
+	 * Applies saved settings to the card
+	 * @param {Object} settings - Saved settings
 	 */
 	applySettings(settings) {
 		if (!settings) return;
 
 		try {
-			// Actualizar valores en los inputs
+			// Update values in inputs
 			if (settings.username && this.elements.usernameInput) {
 				this.elements.usernameInput.value = settings.username;
 			}
@@ -285,12 +599,12 @@ export class CardManager {
 				this.elements.projectDescriptionInput.value = settings.projectDescription;
 			}
 
-			// Actualizar la tarjeta con estos valores
+			// Update card state
 			this.update(settings);
 		} catch (error) {
 			console.error('Error applying card settings:', error);
 
-			// Si hay un sistema de notificaciones, usarlo
+			// If there's a notification system, use it
 			if (window.notificationSystem) {
 				window.notificationSystem.show('Error applying saved settings', 'error');
 			}
@@ -298,47 +612,35 @@ export class CardManager {
 	}
 
 	/**
-	 * Obtiene los datos actuales de la tarjeta
-	 * @returns {Object} Estado actual de la tarjeta
+	 * Gets the current card data
+	 * @returns {Object} Current card state
 	 */
 	getCardData() {
-		return { ...this.state };
+		return this.stateManager.getAllProperties();
 	}
 
 	/**
-	 * Limpia la tarjeta a su estado inicial
+	 * Clears the card to its initial state
 	 */
 	reset() {
-		// Resetear estado
-		this.state = {
-			username: '',
-			repoName: '',
-			projectName: 'Project Name',
-			projectDescription: '',
-			profileLoaded: false,
-		};
-
-		// Resetear inputs
+		// Reset inputs
 		if (this.elements.usernameInput) this.elements.usernameInput.value = '';
 		if (this.elements.repoNameInput) this.elements.repoNameInput.value = '';
 		if (this.elements.projectNameInput) this.elements.projectNameInput.value = '';
 		if (this.elements.projectDescriptionInput) this.elements.projectDescriptionInput.value = '';
 
-		// Resetear visualización
-		this.renderInitialState();
-
-		// Resetear imagen de perfil
-		if (this.elements.profilePic) {
-			this.elements.profilePic.src = CONSTANTS.GITHUB_API.DEFAULT_AVATAR;
-		}
+		// Reset profile image and state
+		this.renderer.updateAvatar(CONSTANTS.GITHUB_API.DEFAULT_AVATAR);
+		this.stateManager.reset();
 	}
 
 	/**
-	 * Prepara la tarjeta para exportación
-	 * @returns {HTMLElement} Clon de la tarjeta preparado para exportación
+	 * Prepares the card for export
+	 * @returns {HTMLElement} Card element
 	 */
 	prepareForExport() {
-		// Esta funcionalidad se delegó al servicio ExportService
+		/* Just return the card element, export logic
+		is handled in the ExportService */
 		return this.elements.card;
 	}
 }
