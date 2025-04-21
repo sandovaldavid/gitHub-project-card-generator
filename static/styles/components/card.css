@@ -378,7 +378,7 @@
 	}
 
 	.description {
-		font-size: 16px;
+		font-size: 2rem;
 	}
 }
 
@@ -424,7 +424,7 @@
 	}
 
 	#displayProjectName {
-		font-size: 1.8rem;
+		font-size: 4rem;
 	}
 
 	.card-footer {
@@ -443,6 +443,6 @@
 
 	#displayUsername,
 	#displayRepoName {
-		font-size: 1rem;
+		font-size: 3rem;
 	}
 }
