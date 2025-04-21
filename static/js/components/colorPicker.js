@@ -1,372 +1,247 @@
 import { CONSTANTS } from '../config.js';
 import { validateColor } from '../../utils/validators.js';
-import {
-	applyStyles,
-	setCSSVariables,
-	createElement,
-	updateClassList,
-} from '../../utils/domUtils.js';
+import { setCSSVariables } from '../../utils/domUtils.js';
 
 /**
- * Clase responsable de gestionar los selectores de color de la aplicación
- * Maneja la interacción con los inputs de color, validación y aplicación de estilos
+ * Interface for color picker components
+ * Implements the Interface Segregation Principle (I)
+ */
+class ColorPickerComponent {
+	/**
+	 * Initialize the component
+	 * @param {string} colorProperty - CSS variable to modify
+	 * @param {string} inputSelector - Selector for the color input
+	 * @param {string} defaultColor - Default color
+	 */
+	constructor(colorProperty, inputSelector, defaultColor) {
+		this.colorProperty = colorProperty;
+		this.inputSelector = inputSelector;
+		this.defaultColor = defaultColor;
+		this.inputElement = document.querySelector(inputSelector);
+
+		if (this.inputElement) {
+			this.inputElement.value = defaultColor;
+			this.setupEventListeners();
+		}
+	}
+
+	/**
+	 * Set up event listeners
+	 */
+	setupEventListeners() {
+		this.inputElement.addEventListener('input', this.handleColorChange.bind(this));
+		this.inputElement.addEventListener('change', this.handleColorValidation.bind(this));
+	}
+
+	/**
+	 * Handle color change event
+	 * @param {Event} event - Input event
+	 */
+	handleColorChange(event) {
+		const color = event.target.value;
+		this.updateColor(color);
+	}
+
+	/**
+	 * Update color in the application
+	 * @param {string} color - Hex color value
+	 */
+	updateColor(color) {
+		setCSSVariables({
+			[this.colorProperty]: color,
+		});
+
+		// Notify about the change
+		this.dispatchEvent('colorchange', {
+			property: this.colorProperty,
+			value: color,
+		});
+	}
+
+	/**
+	 * Validate the selected color
+	 * @param {Event} event - Change event
+	 */
+	handleColorValidation(event) {
+		const color = event.target.value;
+		const validation = validateColor(color);
+
+		if (!validation.isValid) {
+			console.warn(`Invalid color: ${color}`);
+			this.resetToDefault();
+		}
+	}
+
+	/**
+	 * Reset to default color
+	 */
+	resetToDefault() {
+		if (this.inputElement) {
+			this.inputElement.value = this.defaultColor;
+			this.updateColor(this.defaultColor);
+		}
+	}
+
+	/**
+	 * Set a specific color
+	 * @param {string} color - Hex color value
+	 */
+	setColor(color) {
+		const validation = validateColor(color);
+
+		if (validation.isValid && this.inputElement) {
+			this.inputElement.value = color;
+			this.updateColor(color);
+		} else {
+			this.resetToDefault();
+		}
+	}
+
+	/**
+	 * Get current color
+	 * @returns {string} Current color value
+	 */
+	getColor() {
+		return this.inputElement ? this.inputElement.value : this.defaultColor;
+	}
+
+	/**
+	 * Dispatch a color picker event
+	 * @param {string} type - Event type
+	 * @param {Object} detail - Event details
+	 */
+	dispatchEvent(type, detail) {
+		const event = new CustomEvent('colorpicker', {
+			bubbles: true,
+			detail: {
+				type,
+				...detail,
+			},
+		});
+
+		document.dispatchEvent(event);
+	}
+}
+
+/**
+ * Main color picker manager
+ * Implements the Single Responsibility Principle (S) by coordinating multiple color pickers
  */
 export class ColorPickerManager {
 	/**
-	 * Constructor de la clase que inicializa las referencias y estado
+	 * Constructor
 	 */
 	constructor() {
-		this.elements = this.cacheElements();
+		this.colorPickers = new Map();
 		this.defaultColors = CONSTANTS.UI.DEFAULT_COLORS;
-		this.state = {
-			projectColor: this.defaultColors.PROJECT || '#ffffff',
-			borderColor: this.defaultColors.BORDER || '#00a0ff',
-			bgColor: this.defaultColors.BACKGROUND || '#0d1117',
-		};
 
-		this.init();
+		this.initialize();
 	}
 
 	/**
-	 * Inicializa el componente, configura listeners y valores iniciales
+	 * Initialize color pickers
 	 */
-	init() {
-		this.setupColorInputListeners();
-		this.initializeColorValues();
+	initialize() {
+		// Create separate instances for each color with correct CSS variables
+		this.registerColorPicker('--border-color', '#borderColor', this.defaultColors.BORDER);
+
+		this.registerColorPicker(
+			'--project-text-color',
+			'#projectColor',
+			this.defaultColors.PROJECT
+		);
+
+		this.registerColorPicker('--bg-color', '#bgColor', this.defaultColors.BACKGROUND);
+
+		// Subscribe to color events
+		this.setupGlobalListeners();
 	}
 
 	/**
-	 * Guarda referencias a los elementos del DOM
-	 * @returns {Object} Referencias a los elementos del DOM
+	 * Register a new color picker
+	 * @param {string} property - CSS variable
+	 * @param {string} selector - Input selector
+	 * @param {string} defaultColor - Default color
 	 */
-	cacheElements() {
-		return {
-			projectColor: {
-				input: document.getElementById('projectColor'),
-				display: document.querySelector('.color-value'),
-			},
-			borderColor: {
-				input: document.getElementById('borderColor'),
-				display: document.getElementById('borderColor').nextElementSibling,
-			},
-			bgColor: {
-				input: document.getElementById('bgColor'),
-				display: document.getElementById('bgColor').nextElementSibling,
-			},
-		};
+	registerColorPicker(property, selector, defaultColor) {
+		const picker = new ColorPickerComponent(property, selector, defaultColor);
+		this.colorPickers.set(property, picker);
 	}
 
 	/**
-	 * Configura los event listeners para los inputs de color
+	 * Set up global event listeners
 	 */
-	setupColorInputListeners() {
-		Object.entries(this.elements).forEach(([colorType, elements]) => {
-			elements.input.addEventListener('input', () => {
-				this.handleColorChange(colorType, elements.input.value);
-			});
-		});
-	}
-
-	/**
-	 * Maneja el cambio de valor de un input de color
-	 * @param {string} colorType - Tipo de color (projectColor, borderColor, bgColor)
-	 * @param {string} colorValue - Valor hexadecimal del color
-	 */
-	handleColorChange(colorType, colorValue) {
-		// Validar el color
-		const validation = validateColor(colorValue);
-		if (!validation.isValid) {
-			if (window.notificationSystem) {
-				window.notificationSystem.show(validation.message, 'error');
-			} else {
-				console.error(`Invalid color: ${validation.message}`);
+	setupGlobalListeners() {
+		document.addEventListener('colorpicker', (event) => {
+			if (event.detail.type === 'colorchange') {
+				this.handleGlobalColorChange(event.detail.property, event.detail.value);
 			}
-			return;
-		}
-
-		// Actualizar estado
-		this.state[colorType] = colorValue;
-
-		// Actualizar display
-		this.updateColorDisplay(colorType);
-
-		// Actualizar estilos CSS
-		this.applyColorStyles();
-
-		// Disparar evento de cambio
-		this.dispatchChangeEvent(colorType, colorValue);
-	}
-
-	/**
-	 * Actualiza el texto que muestra el valor hexadecimal
-	 * @param {string} colorType - Tipo de color a actualizar
-	 */
-	updateColorDisplay(colorType) {
-		const elements = this.elements[colorType];
-		if (elements && elements.display) {
-			elements.display.textContent = this.state[colorType];
-		}
-	}
-
-	/**
-	 * Aplica los colores a los estilos CSS
-	 * Usa las funciones de domUtils para manipulación del DOM
-	 */
-	applyColorStyles() {
-		// Aplicar color del proyecto al texto usando domUtils
-		const displayProjectName = document.getElementById('displayProjectName');
-		if (displayProjectName) {
-			applyStyles(displayProjectName, {
-				color: this.state.projectColor,
-			});
-		}
-
-		// Actualizar variables CSS para colores globales usando domUtils
-		setCSSVariables({
-			'--border-color': this.state.borderColor,
-			'--bg-color': this.state.bgColor,
-		});
-
-		// Actualizar el borde del contenedor de la tarjeta usando domUtils
-		const cardContainer = document.getElementById('cardContainer');
-		if (cardContainer) {
-			applyStyles(cardContainer, {
-				borderBottomColor: this.state.borderColor,
-			});
-		}
-
-		// Actualizar otros elementos que pueden depender de estos colores
-		this.updateDependentElements();
-	}
-
-	/**
-	 * Actualiza elementos adicionales que dependen de los colores
-	 * Esta funcionalidad estaba en index.js y ahora se integra aquí
-	 */
-	updateDependentElements() {
-		// Actualizar colores de fondo para tarjetas de proyectos
-		const projectCards = document.querySelectorAll('.project-card');
-		projectCards.forEach((card) => {
-			updateClassList(card, {
-				'color-accent': true,
-			});
-
-			// Aplicar un borde sutil con el color de acento
-			applyStyles(card, {
-				borderLeft: `3px solid ${this.state.borderColor}`,
-			});
-		});
-
-		// Actualizar botones con el color de acento
-		const accentButtons = document.querySelectorAll('.btn-accent');
-		accentButtons.forEach((btn) => {
-			applyStyles(btn, {
-				backgroundColor: this.state.borderColor,
-				borderColor: this.state.borderColor,
-			});
 		});
 	}
 
 	/**
-	 * Inicializa los valores de color
+	 * Handle global color changes
+	 * @param {string} property - CSS property that changed
+	 * @param {string} value - New color value
 	 */
-	initializeColorValues() {
-		Object.keys(this.elements).forEach((colorType) => {
-			// Establecer valores iniciales en inputs
-			const inputElement = this.elements[colorType].input;
-			if (inputElement) {
-				inputElement.value = this.state[colorType];
-			}
-
-			// Actualizar displays
-			this.updateColorDisplay(colorType);
-		});
-
-		// Aplicar estilos iniciales
-		this.applyColorStyles();
+	handleGlobalColorChange(property, value) {
+		// You can add specific reactions to color changes here
+		// For example, updating a theme based on a primary color
 	}
 
 	/**
-	 * Dispara un evento personalizado cuando cambia un color
-	 * @param {string} colorType - Tipo de color que cambió
-	 * @param {string} value - Nuevo valor del color
-	 */
-	dispatchChangeEvent(colorType, value) {
-		const event = new CustomEvent('colorchange', {
-			detail: {
-				type: colorType,
-				value: value,
-				previousValue: this.state[colorType] || null,
-			},
-			bubbles: true,
-		});
-
-		this.elements[colorType].input.dispatchEvent(event);
-	}
-
-	/**
-	 * Obtiene todos los colores actuales
-	 * @returns {Object} Estado actual de los colores
-	 */
-	getColors() {
-		return { ...this.state };
-	}
-
-	/**
-	 * Establece múltiples colores a la vez
-	 * @param {Object} colors - Objeto con los colores a establecer
+	 * Set all colors at once
+	 * @param {Object} colors - Object with color properties
 	 */
 	setColors(colors) {
 		if (!colors) return;
 
-		// Actualizar estado y elementos para cada color proporcionado
-		Object.entries(colors).forEach(([colorType, value]) => {
-			if (this.elements[colorType] && validateColor(value).isValid) {
-				this.state[colorType] = value;
-				this.elements[colorType].input.value = value;
-				this.updateColorDisplay(colorType);
+		// Map property names to CSS variables
+		const propertyMap = {
+			projectColor: '--project-text-color',
+			borderColor: '--border-color',
+			bgColor: '--bg-color',
+		};
+
+		Object.entries(colors).forEach(([key, value]) => {
+			const cssProperty = propertyMap[key];
+
+			if (cssProperty && this.colorPickers.has(cssProperty)) {
+				this.colorPickers.get(cssProperty).setColor(value);
+			}
+		});
+	}
+
+	/**
+	 * Get all current colors
+	 * @returns {Object} Object with all colors
+	 */
+	getColors() {
+		const colors = {};
+
+		// Map CSS variables to property names
+		const propertyReverseMap = {
+			'--border-color': 'borderColor',
+			'--project-text-color': 'projectColor',
+			'--bg-color': 'bgColor',
+		};
+
+		this.colorPickers.forEach((picker, property) => {
+			const propName = propertyReverseMap[property];
+			if (propName) {
+				colors[propName] = picker.getColor();
 			}
 		});
 
-		// Aplicar todos los cambios de una vez
-		this.applyColorStyles();
+		return colors;
 	}
 
 	/**
-	 * Valida un color específico
-	 * @param {string} color - Valor hexadecimal del color a validar
-	 * @returns {boolean} True si el color es válido
-	 */
-	validateColorValue(color) {
-		return validateColor(color).isValid;
-	}
-
-	/**
-	 * Resetea los colores a sus valores por defecto
+	 * Reset all colors to defaults
 	 */
 	resetToDefaults() {
-		this.setColors({
-			projectColor: this.defaultColors.PROJECT,
-			borderColor: this.defaultColors.BORDER,
-			bgColor: this.defaultColors.BACKGROUND,
+		this.colorPickers.forEach((picker) => {
+			picker.resetToDefault();
 		});
-	}
-
-	/**
-	 * Crea un panel de selección de color avanzado
-	 * @param {string} colorType - Tipo de color para el que crear el selector
-	 * @param {HTMLElement} container - Contenedor donde insertar el selector
-	 */
-	createAdvancedColorPicker(colorType, container) {
-		if (!this.elements[colorType] || !container) return;
-
-		// Limpiar contenedor si es necesario
-		while (container.firstChild) {
-			container.removeChild(container.firstChild);
-		}
-
-		// Crear estructura del color picker avanzado usando domUtils
-		const pickerContainer = createElement('div', {
-			className: 'advanced-color-picker',
-		});
-
-		// Crear paleta de colores predefinidos
-		const presetColors = CONSTANTS.UI.PRESET_COLORS || [
-			'#FF5252',
-			'#FF4081',
-			'#E040FB',
-			'#7C4DFF',
-			'#536DFE',
-			'#448AFF',
-			'#40C4FF',
-			'#18FFFF',
-			'#64FFDA',
-			'#69F0AE',
-			'#B2FF59',
-			'#EEFF41',
-			'#FFFF00',
-			'#FFD740',
-			'#FFAB40',
-			'#FF6E40',
-		];
-
-		const colorPalette = createElement('div', {
-			className: 'color-palette',
-		});
-
-		presetColors.forEach((color) => {
-			const colorSwatch = createElement('div', {
-				className: 'color-swatch',
-				style: {
-					backgroundColor: color,
-				},
-				dataset: {
-					color: color,
-				},
-				onClick: () => this.handleColorChange(colorType, color),
-			});
-
-			colorPalette.appendChild(colorSwatch);
-		});
-
-		// Crear campo de entrada para valor hexadecimal
-		const hexInput = createElement(
-			'div',
-			{
-				className: 'hex-input-container',
-			},
-			[
-				createElement('span', {
-					textContent: '#',
-				}),
-				createElement('input', {
-					type: 'text',
-					className: 'hex-input',
-					value: this.state[colorType].replace('#', ''),
-					maxLength: 6,
-					onInput: (e) => {
-						const hexValue = `#${e.target.value}`;
-						const validation = validateColor(hexValue);
-						if (validation.isValid) {
-							this.handleColorChange(colorType, hexValue);
-						}
-					},
-				}),
-			]
-		);
-
-		pickerContainer.appendChild(colorPalette);
-		pickerContainer.appendChild(hexInput);
-		container.appendChild(pickerContainer);
-	}
-
-	/**
-	 * Guarda los colores actuales en localStorage
-	 * Método que antes estaba en index.js y ahora forma parte de este componente
-	 */
-	saveColorSettings() {
-		try {
-			localStorage.setItem('gitcardx-colors', JSON.stringify(this.state));
-		} catch (error) {
-			console.warn('Failed to save color settings to localStorage:', error);
-		}
-	}
-
-	/**
-	 * Carga colores guardados desde localStorage
-	 * Método que antes estaba en index.js y ahora forma parte de este componente
-	 */
-	loadColorSettings() {
-		try {
-			const savedColors = localStorage.getItem('gitcardx-colors');
-			if (savedColors) {
-				const colors = JSON.parse(savedColors);
-				this.setColors(colors);
-				return true;
-			}
-		} catch (error) {
-			console.warn('Failed to load color settings from localStorage:', error);
-		}
-		return false;
 	}
 }
