@@ -19,10 +19,137 @@ class ColorPickerComponent {
 		this.defaultColor = defaultColor;
 		this.inputElement = document.querySelector(inputSelector);
 
+		this.colorValueElement = this.inputElement
+			? this.inputElement.closest('.color-input-group')?.querySelector('.color-value')
+			: null;
+
 		if (this.inputElement) {
 			this.inputElement.value = defaultColor;
+
+			// Set format to hex to ensure color picker opens with hexadecimal format
+			if (this.inputElement.type === 'color') {
+				// Force hexadecimal format for the color picker
+				this.inputElement.addEventListener('input', (e) => {
+					// Convert any value to hex if it's not already
+					const hexValue = this.ensureHexFormat(e.target.value);
+					if (hexValue !== e.target.value) {
+						e.target.value = hexValue;
+					}
+				});
+			}
+
 			this.setupEventListeners();
+
+			// If we found the color-value element, convert it to an input field
+			if (this.colorValueElement) {
+				this.convertToInputField(this.colorValueElement, defaultColor);
+			}
 		}
+	}
+
+	/**
+	 * Converts the color-value span to an input field
+	 * @param {HTMLElement} element - The color-value span element
+	 * @param {string} defaultColor - Default color value
+	 */
+	convertToInputField(element, defaultColor) {
+		// Store the original text value
+		const originalValue = element.textContent || defaultColor;
+
+		// Create a new input element
+		const inputField = document.createElement('input');
+		inputField.type = 'text';
+		inputField.value = originalValue;
+		inputField.className = 'color-value-input';
+		inputField.style.fontFamily = 'monospace';
+		inputField.style.width = '80px';
+		inputField.style.padding = '0.3rem';
+		inputField.style.border = '1px solid #d1d5db';
+		inputField.style.borderRadius = '4px';
+		inputField.style.fontSize = '0.9rem';
+
+		// Replace the span with the input
+		element.parentNode.replaceChild(inputField, element);
+
+		// Update the reference
+		this.colorValueElement = inputField;
+
+		// Add event listeners
+		this.colorValueElement.addEventListener('input', this.handleValueInput.bind(this));
+		this.colorValueElement.addEventListener('change', this.handleValueChange.bind(this));
+	}
+
+	/**
+	 * Handle input in the color value field
+	 * @param {Event} event - Input event
+	 */
+	handleValueInput(event) {
+		// Update as user types if it's a valid hex
+		const value = event.target.value;
+		if (value.startsWith('#') && (value.length === 4 || value.length === 7)) {
+			const validation = validateColor(value);
+			if (validation.isValid) {
+				this.inputElement.value = value;
+				setCSSVariables({
+					[this.colorProperty]: value,
+				});
+			}
+		}
+	}
+
+	/**
+	 * Handle change in the color value field
+	 * @param {Event} event - Change event
+	 */
+	handleValueChange(event) {
+		const value = event.target.value;
+
+		// Try to format it as a hex color if it's not already
+		let hexColor = value;
+		if (!hexColor.startsWith('#')) {
+			hexColor = '#' + value;
+		}
+
+		// Validate the color
+		const validation = validateColor(hexColor);
+
+		if (validation.isValid) {
+			// Update the color picker with the valid hex value
+			this.inputElement.value = hexColor;
+			this.updateColor(hexColor);
+		} else {
+			// If invalid, reset to the current color from the picker
+			event.target.value = this.inputElement.value;
+		}
+	}
+
+	/**
+	 * Ensures that a color value is in hexadecimal format
+	 * @param {string} color - Color value to convert
+	 * @returns {string} Color in hexadecimal format
+	 */
+	ensureHexFormat(color) {
+		// If it's already a hex color with # prefix, return it
+		if (/^#[0-9A-Fa-f]{6}$/i.test(color)) {
+			return color;
+		}
+
+		// If it's a hex color without # prefix, add it
+		if (/^[0-9A-Fa-f]{6}$/i.test(color)) {
+			return `#${color}`;
+		}
+
+		// If it's an RGB format like rgb(r,g,b)
+		const rgbMatch = color.match(/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i);
+		if (rgbMatch) {
+			const r = parseInt(rgbMatch[1], 10);
+			const g = parseInt(rgbMatch[2], 10);
+			const b = parseInt(rgbMatch[3], 10);
+			return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+		}
+
+		// If conversion failed, return the original or a default
+		return color;
 	}
 
 	/**
@@ -50,6 +177,11 @@ class ColorPickerComponent {
 		setCSSVariables({
 			[this.colorProperty]: color,
 		});
+
+		// Update the color value input if it exists
+		if (this.colorValueElement) {
+			this.colorValueElement.value = color;
+		}
 
 		// Notify about the change
 		this.dispatchEvent('colorchange', {
