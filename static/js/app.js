@@ -372,34 +372,99 @@ function showHelpModal() {
 
 	modal.innerHTML = `
         <div class="help-modal-content">
-            <span class="help-modal-close">&times;</span>
-            <h2>${CONSTANTS.HELP_MODAL.TITLE}</h2>
-            <div class="help-modal-body">
-                <h3>${CONSTANTS.HELP_MODAL.SUBTITLE}</h3>
-                <ol>
-                    <li><strong>${CONSTANTS.HELP_MODAL.STEPS[0].title}</strong> ${CONSTANTS.HELP_MODAL.STEPS[0].content}</li>
-                    <li><strong>${CONSTANTS.HELP_MODAL.STEPS[1].title}</strong> ${CONSTANTS.HELP_MODAL.STEPS[1].content}</li>
-                    <li><strong>${CONSTANTS.HELP_MODAL.STEPS[2].title}</strong> ${CONSTANTS.HELP_MODAL.STEPS[2].content}</li>
-                    <li><strong>${CONSTANTS.HELP_MODAL.STEPS[3].title}</strong> ${CONSTANTS.HELP_MODAL.STEPS[3].content}</li>
-                </ol>
-                <p>${CONSTANTS.HELP_MODAL.FOOTER}</p>
+            <button class="help-modal-close" aria-label="Close help modal">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="help-modal-header">
+                <div class="help-modal-icon">
+                    <i class="fas fa-question-circle"></i>
+                </div>
+                <h2 class="help-modal-title">${CONSTANTS.HELP_MODAL.TITLE}</h2>
+            </div>
+            
+            <p class="help-modal-subtitle">${CONSTANTS.HELP_MODAL.SUBTITLE}</p>
+            
+            <div class="help-modal-steps">
+                ${CONSTANTS.HELP_MODAL.STEPS.map((step, index) => {
+					// Map step titles to specific icons
+					const iconMap = {
+						'Enter GitHub Username': 'fa-user',
+						'Enter Repository Details': 'fa-code-branch',
+						'Customize Your Card': 'fa-palette',
+						'Preview and Download': 'fa-download',
+					};
+					const iconClass = iconMap[step.title] || 'fa-check-circle';
+
+					return `
+                    <div class="help-step">
+                        <div class="help-step-number">${index + 1}</div>
+                        <div class="help-step-content">
+                            <div class="help-step-title">
+                                <i class="fas ${iconClass}"></i> ${step.title}
+                            </div>
+                            <div class="help-step-description">${step.content}</div>
+                        </div>
+                    </div>
+                    `;
+				}).join('')}
+            </div>
+            
+            <div class="help-modal-footer">
+                <i class="fas fa-info-circle"></i>
+                <div class="help-modal-footer-text">${CONSTANTS.HELP_MODAL.FOOTER}</div>
             </div>
         </div>
     `;
 
+	// Función para cerrar el modal completamente
+	const closeModalCompletely = () => {
+		document.body.removeChild(modal);
+		// Restaurar el scroll del body
+		document.body.style.overflow = '';
+		// Asegurarse de eliminar el event listener de ESC
+		document.removeEventListener('keydown', handleEscapeKey);
+	};
+
+	// Función para iniciar animación de cierre
+	const startCloseAnimation = () => {
+		// Animate the content out first
+		const modalContent = modal.querySelector('.help-modal-content');
+		modalContent.style.opacity = '0';
+		modalContent.style.transform = 'translateY(20px)';
+
+		// Then, after a small delay, remove the modal completely
+		setTimeout(closeModalCompletely, 300);
+	};
+
 	// Close modal when clicking X
 	const closeButton = modal.querySelector('.help-modal-close');
-	closeButton.addEventListener('click', () => {
-		document.body.removeChild(modal);
-	});
+	closeButton.addEventListener('click', startCloseAnimation);
 
 	// Close modal when clicking outside the content
 	modal.addEventListener('click', (e) => {
 		if (e.target === modal) {
-			document.body.removeChild(modal);
+			startCloseAnimation();
 		}
 	});
 
+	// Close with ESC key
+	const handleEscapeKey = (e) => {
+		if (e.key === 'Escape') {
+			startCloseAnimation();
+		}
+	};
+
+	document.addEventListener('keydown', handleEscapeKey);
+
+	// Prevent scrolling on the body
+	document.body.style.overflow = 'hidden';
+
 	// Add modal to the page
 	document.body.appendChild(modal);
+
+	// Add a small delay before animating in the content
+	setTimeout(() => {
+		modal.classList.add('show');
+	}, 10);
 }
