@@ -1,276 +1,345 @@
 import { CONSTANTS } from '../config.js';
-import { validateGitHubUsername, isValidURL } from '../../utils/validators.js';
+import { validateGitHubUsername } from '../../utils/validators.js';
+import { isValidURL } from '../../utils/validators.js';
+import { IHttpClient, FetchHttpClient } from './httpService.js';
 
 /**
- * Servicio para interactuar con la API de GitHub
- * Maneja solicitudes, caché y validaciones
+ * GitHub Cache Class
+ * Implements Single Responsibility Principle (S)
+ */
+class GithubCache {
+	/**
+	 * Constructor
+	 * @param {number} ttl - Time to live in milliseconds (1 hour default)
+	 */
+	constructor(ttl = 3600000) {
+		this.cache = new Map();
+		this.ttl = ttl;
+	}
+
+	/**
+	 * Stores a value in cache
+	 * @param {string} key - Key to store
+	 * @param {any} value - Value to store
+	 */
+	set(key, value) {
+		if (!key) return;
+
+		this.cache.set(key, {
+			value,
+			timestamp: Date.now(),
+		});
+	}
+
+	/**
+	 * Gets a value from cache
+	 * @param {string} key - Key to lookup
+	 * @returns {any|null} Stored value or null
+	 */
+	get(key) {
+		if (!key || !this.cache.has(key)) return null;
+
+		const cachedItem = this.cache.get(key);
+		const now = Date.now();
+
+		// Check if expired
+		if (now - cachedItem.timestamp > this.ttl) {
+			this.cache.delete(key);
+			return null;
+		}
+
+		return cachedItem.value;
+	}
+
+	/**
+	 * Clears the entire cache
+	 */
+	clear() {
+		this.cache.clear();
+	}
+
+	/**
+	 * Removes a specific item from cache
+	 * @param {string} key - Key to delete
+	 * @returns {boolean} True if item was deleted
+	 */
+	delete(key) {
+		if (this.cache.has(key)) {
+			this.cache.delete(key);
+			return true;
+		}
+		return false;
+	}
+}
+
+/**
+ * GitHub Service
+ * Implements Dependency Inversion Principle (D) by accepting dependencies
  */
 export class GithubService {
 	/**
-	 * Constructor que inicializa el servicio
+	 * Constructor
+	 * @param {Object} options - Configuration options
+	 * @param {IHttpClient} httpClient - HTTP client to use
 	 */
-	constructor() {
-		this.baseUrl = CONSTANTS.GITHUB_API.BASE_URL;
-		this.cache = new Map();
-		this.defaultAvatar = CONSTANTS.GITHUB_API.DEFAULT_AVATAR;
+	constructor(options = {}, httpClient = null) {
+		this.options = {
+			apiUrl: CONSTANTS.GITHUB_API.BASE_URL,
+			defaultAvatarUrl: CONSTANTS.GITHUB_API.DEFAULT_AVATAR,
+			cacheTTL: 3600000, // 1 hour
+			...options,
+		};
 
-		// Estado para controlar solicitudes en curso
-		this.pendingRequests = new Map();
+		// Initialize dependencies
+		this.httpClient = httpClient || new FetchHttpClient();
+		this.cache = new GithubCache(this.options.cacheTTL);
+
+		// Request state
+		this.lastRequestError = null;
+		this.isLoading = false;
 	}
 
 	/**
-	 * Obtiene información de un usuario de GitHub
-	 * @param {string} username - Nombre de usuario de GitHub
-	 * @returns {Promise<Object>} - Datos del usuario
-	 * @throws {Error} Si el usuario no existe o hay un error de conexión
+	 * Retrieves GitHub user data
+	 * @param {string} username - GitHub username
+	 * @returns {Promise<Object>} User data
+	 * @throws {Error} If request fails
 	 */
-	async getUser(username) {
-		// Validar username usando la función específica
-		const validation = validateGitHubUsername(username);
-		if (!validation.isValid) {
-			throw new Error(validation.message);
-		}
-
-		// Verificar si ya tenemos los datos en cache
-		const cacheKey = `user_${username}`;
-		if (this.cache.has(cacheKey)) {
-			return this.cache.get(cacheKey);
-		}
-
-		// Evitar solicitudes duplicadas simultáneas
-		if (this.pendingRequests.has(cacheKey)) {
-			return this.pendingRequests.get(cacheKey);
-		}
-
-		// Crear nueva solicitud
-		const request = this.fetchUserData(username, cacheKey);
-		this.pendingRequests.set(cacheKey, request);
-
+	async getUserData(username) {
 		try {
-			const result = await request;
-			return result;
-		} finally {
-			this.pendingRequests.delete(cacheKey);
-		}
-	}
+			this.isLoading = true;
+			this.lastRequestError = null;
 
-	/**
-	 * Realiza la solicitud HTTP para obtener datos del usuario
-	 * @param {string} username - Nombre de usuario de GitHub
-	 * @param {string} cacheKey - Clave para almacenar en caché
-	 * @returns {Promise<Object>} - Datos del usuario
-	 * @private
-	 */
-	async fetchUserData(username, cacheKey) {
-		try {
-			const response = await fetch(`${this.baseUrl}/users/${username}`);
-
-			if (!response.ok) {
-				if (response.status === 404) {
-					throw new Error('GitHub user not found');
-				} else if (response.status === 403) {
-					throw new Error('GitHub API rate limit exceeded. Please try again later.');
-				} else {
-					throw new Error(`GitHub API error: ${response.statusText}`);
-				}
+			// Validate username
+			const validation = validateGitHubUsername(username);
+			if (!validation.isValid) {
+				throw new Error(validation.message);
 			}
 
-			const userData = await response.json();
+			// Check cache first
+			const cacheKey = `user:${username}`;
+			const cachedData = this.cache.get(cacheKey);
 
-			// Guardar en cache
+			if (cachedData) {
+				return cachedData;
+			}
+
+			// If not in cache, fetch data
+			const userData = await this.fetchUserData(username);
+
+			// Store in cache
 			this.cache.set(cacheKey, userData);
 
 			return userData;
 		} catch (error) {
-			if (error.message.includes('API')) {
-				throw error;
-			} else {
-				throw new Error('Failed to fetch GitHub profile. Check your internet connection.');
-			}
+			this.lastRequestError = error.message;
+			throw error;
+		} finally {
+			this.isLoading = false;
 		}
 	}
 
 	/**
-	 * Obtiene los repositorios de un usuario
-	 * @param {string} username - Nombre de usuario de GitHub
-	 * @returns {Promise<Array>} - Lista de repositorios
+	 * Makes API request to get user data
+	 * @param {string} username - Username
+	 * @returns {Promise<Object>} User data
+	 * @private
 	 */
-	async getUserRepositories(username) {
-		// Validar username
-		const validation = validateGitHubUsername(username);
-		if (!validation.isValid) {
-			throw new Error(validation.message);
-		}
-
-		// Verificar caché
-		const cacheKey = `repos_${username}`;
-		if (this.cache.has(cacheKey)) {
-			return this.cache.get(cacheKey);
-		}
+	async fetchUserData(username) {
+		const url = `${this.options.apiUrl}/users/${encodeURIComponent(username)}`;
 
 		try {
-			const response = await fetch(
-				`${this.baseUrl}/users/${username}/repos?sort=updated&per_page=100`
-			);
-
-			if (!response.ok) {
-				if (response.status === 404) {
-					throw new Error('GitHub user not found');
-				} else {
-					throw new Error(`GitHub API error: ${response.statusText}`);
-				}
-			}
-
-			const reposData = await response.json();
-
-			// Guardar en cache
-			this.cache.set(cacheKey, reposData);
-
-			return reposData;
+			const data = await this.httpClient.get(url);
+			return this.processUserData(data);
 		} catch (error) {
-			throw new Error(`Failed to fetch repositories: ${error.message}`);
+			if (error.message.includes('404')) {
+				throw new Error(`User '${username}' not found on GitHub`);
+			}
+			throw error;
 		}
 	}
 
 	/**
-	 * Obtiene información de un repositorio específico
-	 * @param {string} username - Propietario del repositorio
-	 * @param {string} repoName - Nombre del repositorio
-	 * @returns {Promise<Object>} - Datos del repositorio
+	 * Processes raw user data
+	 * @param {Object} userData - Raw user data
+	 * @returns {Object} Processed data
+	 * @private
 	 */
-	async getRepository(username, repoName) {
-		// Validación
-		const userValidation = validateGitHubUsername(username);
-		if (!userValidation.isValid) {
-			throw new Error(userValidation.message);
+	processUserData(userData) {
+		if (!userData) {
+			return null;
 		}
 
-		if (!repoName || repoName.trim() === '') {
-			throw new Error('Repository name is required');
-		}
+		// Extract only needed fields
+		return {
+			login: userData.login,
+			name: userData.name,
+			avatar_url: userData.avatar_url,
+			html_url: userData.html_url,
+			public_repos: userData.public_repos,
+			followers: userData.followers,
+			bio: userData.bio,
+		};
+	}
 
-		const cacheKey = `repo_${username}_${repoName}`;
-		if (this.cache.has(cacheKey)) {
-			return this.cache.get(cacheKey);
+	/**
+	 * Gets repository information
+	 * @param {string} username - Username
+	 * @param {string} repoName - Repository name
+	 * @returns {Promise<Object>} Repository data
+	 */
+	async getRepositoryData(username, repoName) {
+		if (!username || !repoName) {
+			throw new Error('Username and repository name are required');
 		}
 
 		try {
-			const response = await fetch(`${this.baseUrl}/repos/${username}/${repoName}`);
+			this.isLoading = true;
+			this.lastRequestError = null;
 
-			if (!response.ok) {
-				if (response.status === 404) {
-					throw new Error('Repository not found');
-				} else {
-					throw new Error(`GitHub API error: ${response.statusText}`);
-				}
+			// Check cache first
+			const cacheKey = `repo:${username}/${repoName}`;
+			const cachedData = this.cache.get(cacheKey);
+
+			if (cachedData) {
+				return cachedData;
 			}
 
-			const repoData = await response.json();
+			const url = `${this.options.apiUrl}/repos/${encodeURIComponent(
+				username
+			)}/${encodeURIComponent(repoName)}`;
+			const data = await this.httpClient.get(url);
 
-			// Guardar en cache
+			const repoData = this.processRepoData(data);
+
+			// Store in cache
 			this.cache.set(cacheKey, repoData);
 
 			return repoData;
 		} catch (error) {
-			throw new Error(`Failed to fetch repository: ${error.message}`);
-		}
-	}
-
-	/**
-	 * Aplica los datos del perfil a la UI
-	 * @param {Object} userData - Datos del usuario
-	 * @param {Object} elements - Referencias a elementos DOM
-	 */
-	applyUserDataToUI(userData, elements) {
-		if (!userData || !elements) return;
-
-		if (elements.profilePic) {
-			// Usar avatar_url o fallback a avatar predeterminado
-			const avatarUrl = userData.avatar_url || this.defaultAvatar;
-			elements.profilePic.src = avatarUrl;
-
-			// Validar URL para seguridad adicional
-			if (!isValidURL(avatarUrl)) {
-				elements.profilePic.src = this.defaultAvatar;
-				console.warn('Invalid avatar URL detected');
+			this.lastRequestError = error.message;
+			if (error.message.includes('404')) {
+				throw new Error(`Repository '${repoName}' not found for user '${username}'`);
 			}
-		}
-
-		if (elements.username) {
-			elements.username.textContent = userData.login || 'username';
-		}
-
-		// Se pueden añadir más campos según los datos disponibles
-		if (elements.name && userData.name) {
-			elements.name.textContent = userData.name;
-		}
-
-		if (elements.bio && userData.bio) {
-			elements.bio.textContent = userData.bio;
+			throw error;
+		} finally {
+			this.isLoading = false;
 		}
 	}
 
 	/**
-	 * Limpia la caché para un usuario específico o toda la caché
-	 * @param {string} [username] - Usuario para el que limpiar la caché (opcional)
+	 * Processes raw repository data
+	 * @param {Object} repoData - Raw repository data
+	 * @returns {Object} Processed data
+	 * @private
 	 */
-	clearCache(username) {
-		if (username) {
-			// Limpiar entradas específicas para este usuario
-			const userCacheKeys = [`user_${username}`, `repos_${username}`];
-			userCacheKeys.forEach((key) => this.cache.delete(key));
-
-			// Limpiar repositorios individuales
-			for (const key of this.cache.keys()) {
-				if (key.startsWith(`repo_${username}_`)) {
-					this.cache.delete(key);
-				}
-			}
-		} else {
-			// Limpiar toda la caché
-			this.cache.clear();
+	processRepoData(repoData) {
+		if (!repoData) {
+			return null;
 		}
+
+		return {
+			name: repoData.name,
+			full_name: repoData.full_name,
+			description: repoData.description,
+			html_url: repoData.html_url,
+			stargazers_count: repoData.stargazers_count,
+			forks_count: repoData.forks_count,
+			language: repoData.language,
+			updated_at: repoData.updated_at,
+		};
 	}
 
 	/**
-	 * Determina si un usuario existe en GitHub
-	 * @param {string} username - Nombre de usuario a verificar
-	 * @returns {Promise<boolean>} - True si el usuario existe
+	 * Validates an avatar URL
+	 * @param {string} url - URL to validate
+	 * @returns {Promise<boolean>} True if URL is valid
 	 */
-	async userExists(username) {
+	async validateAvatarUrl(url) {
+		if (!url || !isValidURL(url)) {
+			return false;
+		}
+
 		try {
-			await this.getUser(username);
-			return true;
+			const response = await fetch(url, { method: 'HEAD' });
+			return response.ok && response.headers.get('content-type').startsWith('image/');
 		} catch (error) {
+			console.warn('Failed to validate avatar URL:', error);
 			return false;
 		}
 	}
 
 	/**
-	 * Obtiene los lenguajes utilizados en un repositorio
-	 * @param {string} username - Propietario del repositorio
-	 * @param {string} repoName - Nombre del repositorio
-	 * @returns {Promise<Object>} - Mapa de lenguajes y bytes de código
+	 * Gets a valid avatar URL
+	 * @param {string} url - URL to validate
+	 * @returns {Promise<string>} Valid URL or default avatar
 	 */
-	async getRepositoryLanguages(username, repoName) {
-		const cacheKey = `langs_${username}_${repoName}`;
+	async getValidAvatarUrl(url) {
+		const isValid = await this.validateAvatarUrl(url);
+		return isValid ? url : this.options.defaultAvatarUrl;
+	}
 
-		if (this.cache.has(cacheKey)) {
-			return this.cache.get(cacheKey);
-		}
-
+	/**
+	 * Gets a GitHub user's profile image
+	 * @param {string} username - GitHub username
+	 * @returns {Promise<string>} Profile image URL
+	 * @throws {Error} If image fetch fails
+	 */
+	async getProfileImage(username) {
 		try {
-			const response = await fetch(`${this.baseUrl}/repos/${username}/${repoName}/languages`);
+			this.isLoading = true;
+			this.lastRequestError = null;
 
-			if (!response.ok) {
-				throw new Error(`Failed to fetch repository languages: ${response.statusText}`);
+			// Check cache first
+			const cacheKey = `avatar:${username}`;
+			const cachedData = this.cache.get(cacheKey);
+
+			if (cachedData) {
+				return cachedData;
 			}
 
-			const languagesData = await response.json();
-			this.cache.set(cacheKey, languagesData);
-			return languagesData;
+			// Get user data to extract avatar URL
+			const userData = await this.getUserData(username);
+			if (!userData) {
+				throw new Error(`User '${username}' not found`);
+			}
+
+			// Validate and get avatar URL
+			const avatarUrl = await this.getValidAvatarUrl(userData.avatar_url);
+
+			// Cache the avatar URL
+			this.cache.set(cacheKey, avatarUrl);
+
+			return avatarUrl;
 		} catch (error) {
-			throw new Error(`Error fetching repository languages: ${error.message}`);
+			this.lastRequestError = error.message;
+			// Return default avatar on error
+			return this.options.defaultAvatarUrl;
+		} finally {
+			this.isLoading = false;
 		}
+	}
+
+	/**
+	 * Clears the service cache
+	 */
+	clearCache() {
+		this.cache.clear();
+	}
+
+	/**
+	 * Gets the last error state
+	 * @returns {string|null} Error message or null
+	 */
+	getLastError() {
+		return this.lastRequestError;
+	}
+
+	/**
+	 * Checks if service is loading data
+	 * @returns {boolean} True if loading is in progress
+	 */
+	getIsLoading() {
+		return this.isLoading;
 	}
 }
