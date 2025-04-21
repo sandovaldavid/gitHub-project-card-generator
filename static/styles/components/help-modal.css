@@ -356,6 +356,7 @@
 	.help-step-number {
 		margin-bottom: 0.8rem;
 		margin-right: 0;
+		width: 0.5rem;
 	}
 
 	.help-modal-header {
