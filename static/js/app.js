@@ -78,7 +78,7 @@ function setupEventListeners(app) {
 	const colorPicker = app.getComponent('colorPicker');
 	const fileUploader = app.getComponent('fileUploader');
 	const storageService = app.getService('storage');
-	
+
 	// Create confirmation modal instance
 	const confirmationModal = new ConfirmationModal();
 
@@ -200,46 +200,52 @@ function setupEventListeners(app) {
 
 	// Reset button in header
 	eventManager.setupDOMEvent('#resetForm', 'click', () => {
-		confirmationModal.show({
-			title: 'Reset All Settings',
-			message: 'Are you sure you want to reset all fields? This action cannot be undone.',
-			confirmText: 'Reset',
-			cancelText: 'Cancel',
-			icon: 'sync-alt',
-			confirmButtonClass: 'btn-danger'
-		}, () => {
-			// Reset all components
-			cardManager.reset();
-			colorPicker.resetToDefaults();
-			fileUploader.reset();
+		confirmationModal.show(
+			{
+				title: 'Reset All Settings',
+				message: 'Are you sure you want to reset all fields? This action cannot be undone.',
+				confirmText: 'Reset',
+				cancelText: 'Cancel',
+				icon: 'sync-alt',
+				confirmButtonClass: 'btn-danger',
+			},
+			() => {
+				// Reset all components
+				cardManager.reset();
+				colorPicker.resetToDefaults();
+				fileUploader.reset();
 
-			// Clear settings
-			settingsManager.clearSettings();
+				// Clear settings
+				settingsManager.clearSettings();
 
-			notificationSystem.info('All settings have been reset');
-		});
+				notificationSystem.info('All settings have been reset');
+			}
+		);
 	});
-	
+
 	// Reset button in settings panel
 	eventManager.setupDOMEvent('#resetButton', 'click', () => {
-		confirmationModal.show({
-			title: 'Reset All Settings',
-			message: 'Are you sure you want to reset all fields? This action cannot be undone.',
-			confirmText: 'Reset',
-			cancelText: 'Cancel',
-			icon: 'sync-alt',
-			confirmButtonClass: 'btn-danger'
-		}, () => {
-			// Reset all components
-			cardManager.reset();
-			colorPicker.resetToDefaults();
-			fileUploader.reset();
+		confirmationModal.show(
+			{
+				title: 'Reset All Settings',
+				message: 'Are you sure you want to reset all fields? This action cannot be undone.',
+				confirmText: 'Reset',
+				cancelText: 'Cancel',
+				icon: 'sync-alt',
+				confirmButtonClass: 'btn-danger',
+			},
+			() => {
+				// Reset all components
+				cardManager.reset();
+				colorPicker.resetToDefaults();
+				fileUploader.reset();
 
-			// Clear settings
-			settingsManager.clearSettings();
+				// Clear settings
+				settingsManager.clearSettings();
 
-			notificationSystem.info('All settings have been reset');
-		});
+				notificationSystem.info('All settings have been reset');
+			}
+		);
 	});
 
 	// Help button
