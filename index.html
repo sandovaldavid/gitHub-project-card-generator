@@ -170,10 +170,13 @@
 						</div>
 
 						<div class="preview-actions">
-							<button id="updateCard" class="btn btn-primary">
+							<button id="updateCard" class="btn btn-primary" disabled>
 								<i class="fas fa-sync-alt"></i> Apply Changes
 							</button>
-							<button id="downloadCard" class="btn btn-primary">
+							<button
+								id="downloadCard"
+								class="btn btn-primary tooltip"
+								data-tooltip="Image ready to download ✅">
 								<i class="fas fa-download"></i> Download as PNG
 							</button>
 						</div>
@@ -219,6 +222,10 @@
 								Main background color of the card
 							</div>
 						</div>
+
+						<button id="resetColors" class="reset-colors-button">
+							<i class="fas fa-undo"></i> Restore Default Colors
+						</button>
 					</div>
 
 					<div class="panel-section">
