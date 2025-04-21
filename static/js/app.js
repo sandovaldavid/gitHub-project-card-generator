@@ -1,303 +1,405 @@
-import { CardManager } from './components/cardManager.js';
+// Module and service imports
+import { Application } from './core/Application.js';
+import { EventManager } from './core/EventManager.js';
+import { SettingsManager } from './core/SettingsManager.js';
 import { ColorPickerManager } from './components/colorPicker.js';
 import { FileUploader } from './components/fileUploader.js';
-import { NotificationSystem } from './components/notification.js';
 import { GithubService } from './services/githubService.js';
 import { ExportService } from './services/exportService.js';
 import { StorageService } from './services/storageService.js';
+import { NotificationSystem } from './components/notification.js';
+import { CardManager } from './components/cardManager.js';
+import { CONSTANTS } from './config.js';
 
-class GitCardXApp {
-	constructor() {
-		this.components = {};
-		this.services = {};
-		this.state = {
-			profileLoaded: false,
-			hasProjectLogo: false,
-			hasBackgroundImage: false,
-		};
-	}
+/**
+ * Application initialization
+ * This script acts as the main entry point, orchestrating the different components
+ * Implementing SOLID principles for better separation of responsibilities
+ */
+document.addEventListener('DOMContentLoaded', () => {
+	// Create the main application instance
+	const app = new Application();
 
-	init() {
-		this.initServices();
-		this.initComponents();
-		this.loadSavedPreferences();
-		this.setupEventListeners();
-	}
+	// Initialize services
+	const storageService = new StorageService();
+	const githubService = new GithubService();
+	const exportService = new ExportService();
 
-	initServices() {
-		this.services.github = new GithubService();
-		this.services.exporter = new ExportService();
-		this.services.storage = new StorageService('gitcardx-settings');
-		this.services.notifications = new NotificationSystem();
-	}
+	// Initialize core services
+	const eventManager = new EventManager();
+	const settingsManager = new SettingsManager(storageService);
 
-	initComponents() {
-		this.components.cardManager = new CardManager();
-		this.components.colorPicker = new ColorPickerManager();
-		this.components.fileUploader = new FileUploader({
-			projectLogoSelector: '#projectLogo',
-			projectLogoFileNameSelector: '#projectLogoFileName',
-			bgImageSelector: '#bgImage',
-			bgImageFileNameSelector: '#bgImageFileName',
-			removeBgImageSelector: '#removeBgImage',
-			logoContainerSelector: '#logoContainer',
-			cardSelector: '#githubCard',
-		});
-		// Después de cargar una imagen de fondo
-		this.components.fileUploader.updateOpacityControlVisibility();
-	}
+	// Register services in the application
+	app.registerService('storage', storageService);
+	app.registerService('github', githubService);
+	app.registerService('export', exportService);
+	app.registerService('events', eventManager);
+	app.registerService('settings', settingsManager);
 
-	loadSavedPreferences() {
-		const savedSettings = this.services.storage.load();
-		if (savedSettings) {
-			// Aplicar configuraciones guardadas
-			this.components.colorPicker.setColors(savedSettings.colors);
-			this.components.cardManager.applySettings(savedSettings.card);
+	// Initialize notification system (global)
+	const notificationSystem = new NotificationSystem({
+		position: CONSTANTS.NOTIFICATION.POSITION,
+		duration: CONSTANTS.NOTIFICATION.DURATION,
+	});
+	app.registerService('notifications', notificationSystem);
 
-			// Restaurar imágenes guardadas si existen
-			if (savedSettings.images) {
-				if (savedSettings.images.logo) {
-					this.components.fileUploader.applyImage(savedSettings.images.logo, 'logo');
-				}
-				if (savedSettings.images.background) {
-					this.components.fileUploader.applyImage(
-						savedSettings.images.background,
-						'background'
-					);
-				}
-			}
-		}
-	}
+	// Initialize UI components
+	const colorPicker = new ColorPickerManager();
+	const fileUploader = new FileUploader();
+	const cardManager = new CardManager();
 
-	setupEventListeners() {
-		// Botón de carga de perfil
-		document
-			.getElementById('loadProfile')
-			.addEventListener('click', () => this.loadGithubProfile());
+	// Register components in the application
+	app.registerComponent('colorPicker', colorPicker);
+	app.registerComponent('fileUploader', fileUploader);
+	app.registerComponent('cardManager', cardManager);
 
-		// Botón de generación de tarjeta
-		document.getElementById('generateCard').addEventListener('click', () => this.updateCard());
+	// Initialize the application
+	app.initialize(() => {
+		// Load and apply saved settings
+		loadSavedSettings(app);
 
-		// Botón de descarga
-		document
-			.getElementById('downloadCard')
-			.addEventListener('click', () => this.downloadCard());
+		// Configure event handlers after initialization
+		setupEventListeners(app);
+	});
+});
 
-		// Botón de reset/limpiar formulario
-		const resetBtn = document.getElementById('resetForm');
-		if (resetBtn) {
-			resetBtn.addEventListener('click', () => this.resetApplication());
-		}
+/**
+ * Sets up the application's event listeners
+ * @param {Application} app - Application instance
+ */
+function setupEventListeners(app) {
+	const eventManager = app.getService('events');
+	const cardManager = app.getComponent('cardManager');
+	const githubService = app.getService('github');
+	const exportService = app.getService('export');
+	const settingsManager = app.getService('settings');
+	const notificationSystem = app.getService('notifications');
+	const colorPicker = app.getComponent('colorPicker');
+	const fileUploader = app.getComponent('fileUploader');
+	const storageService = app.getService('storage');
 
-		// Eventos de cambio en inputs
-		this.setupInputListeners();
-	}
-
-	setupInputListeners() {
-		// Listeners para inputs de texto con actualización en tiempo real
-		const textInputs = ['repoName', 'projectName', 'projectDescription'];
-
-		textInputs.forEach((inputId) => {
-			const input = document.getElementById(inputId);
-			if (input) {
-				input.addEventListener('input', () => this.handleInputChange(inputId, input.value));
-			}
-		});
-
-		// Escuchar eventos de cambio de color
-		document.addEventListener('colorchange', (e) => {
-			this.handleColorChange(e.detail.type, e.detail.value);
-			// Guardar colores automáticamente
-			this.saveSettings();
-		});
-
-		// Escuchar eventos de carga de archivos
-		document.addEventListener('filechange', (e) => {
-			this.handleFileChange(e.detail);
-			// Guardar estado de archivos automáticamente
-			this.saveSettings();
-		});
-	}
-
-	handleInputChange(inputId, value) {
-		// Actualización en tiempo real para algunos elementos
-		switch (inputId) {
-			case 'projectName':
-				this.components.cardManager.updateProjectName(value);
-				break;
-			case 'repoName':
-				this.components.cardManager.updateRepositoryName(value);
-				break;
-			case 'projectDescription':
-				this.components.cardManager.updateDescription(value);
-				break;
-		}
-	}
-
-	handleColorChange(type, value) {
-		// Ya manejado por ColorPickerManager, pero podríamos añadir lógica adicional aquí
-		this.state.colorSettings = this.components.colorPicker.getColors();
-	}
-
-	handleFileChange(detail) {
-		if (detail.type === 'projectlogo') {
-			this.state.hasProjectLogo = true;
-		} else if (detail.type === 'backgroundimage') {
-			this.state.hasBackgroundImage = true;
-		} else if (detail.type === 'projectlogoremoved') {
-			this.state.hasProjectLogo = false;
-		} else if (detail.type === 'backgroundimageremoved') {
-			this.state.hasBackgroundImage = false;
-		}
-	}
-
-	loadGithubProfile() {
-		const username = document.getElementById('username').value.trim();
-
-		if (!username) {
-			this.services.notifications.show('Please enter a GitHub username', 'warning');
+	// Button to load GitHub profile
+	eventManager.setupDOMEvent('#loadProfile', 'click', async (event) => {
+		const usernameInput = document.getElementById('username');
+		if (!usernameInput || !usernameInput.value.trim()) {
+			notificationSystem.error('Please enter a GitHub username');
 			return;
 		}
 
-		const button = document.getElementById('loadProfile');
-		button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
-		button.disabled = true;
+		const loadProfileBtn = event.target;
+		loadProfileBtn.disabled = true;
+		try {
+			const userData = await githubService.getUserData(usernameInput.value.trim());
+			cardManager.setUserData(userData);
 
-		this.services.github
-			.getUser(username)
-			.then((userData) => {
-				this.components.cardManager.setUserData(userData);
-				this.state.profileLoaded = true;
-				this.services.notifications.show('Profile loaded successfully', 'success');
-			})
-			.catch((error) => {
-				this.services.notifications.show(`Error: ${error.message}`, 'error');
-			})
-			.finally(() => {
-				button.innerHTML = '<i class="fas fa-download"></i> Load';
-				button.disabled = false;
+			// Save to settings and localStorage
+			const cardData = {
+				username: userData.login,
+				avatar_url: userData.avatar_url,
+			};
+
+			// Save to settingsManager
+			settingsManager.saveSettings('card', cardData);
+
+			// Save directly to localStorage to ensure persistence
+			const existingCardData = storageService.loadItem('card') || {};
+			storageService.saveItem('card', {
+				...existingCardData,
+				...cardData,
 			});
-	}
 
-	updateCard() {
-		const button = document.getElementById('generateCard');
-		const oldText = button.innerHTML;
-		button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
-		button.disabled = true;
-
-		try {
-			// Recolectar datos de los inputs
-			const formData = this.collectFormData();
-
-			// Actualizar la tarjeta
-			this.components.cardManager.update(formData);
-
-			// Guardar preferencias
-			this.saveSettings();
-
-			this.services.notifications.show('Card updated successfully', 'success');
+			notificationSystem.success('GitHub profile loaded successfully');
 		} catch (error) {
-			this.services.notifications.show(`Error: ${error.message}`, 'error');
-			console.error(error);
+			notificationSystem.error(error.message);
 		} finally {
-			button.innerHTML = oldText;
-			button.disabled = false;
+			loadProfileBtn.disabled = false;
 		}
-	}
+	});
 
-	downloadCard() {
-		const button = document.getElementById('downloadCard');
-		const oldText = button.innerHTML;
+	// Button to update the card
+	eventManager.setupDOMEvent('#updateCard', 'click', () => {
+		// Get current card data to preserve avatar URL
+		const currentCardData = cardManager.getCardData();
+		const avatar_url = currentCardData.avatar_url;
 
-		button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
-		button.disabled = true;
+		// Collect data from the form fields
+		const data = {
+			username: document.getElementById('username')?.value || '',
+			repoName: document.getElementById('repoName')?.value || '',
+			projectName: document.getElementById('projectName')?.value || '',
+			projectDescription: document.getElementById('projectDescription')?.value || '',
+			// Preserve avatar URL if it exists
+			avatar_url: avatar_url,
+		};
 
 		try {
-			this.services.exporter
-				.exportToPNG('githubCard')
-				.then(() => {
-					this.services.notifications.show('Card downloaded successfully', 'success');
-				})
-				.catch((error) => {
-					this.services.notifications.show('Error downloading card', 'error');
-					console.error(error);
-				})
-				.finally(() => {
-					button.innerHTML = oldText;
-					button.disabled = false;
-				});
+			cardManager.update(data);
+
+			// Save to settings, including avatar URL
+			settingsManager.saveSettings('card', data);
+
+			// Save directly to localStorage to ensure persistence
+			storageService.saveItem('card', data);
+
+			notificationSystem.success('Card updated successfully');
 		} catch (error) {
-			button.innerHTML = oldText;
-			button.disabled = false;
-			this.services.notifications.show('Error preparing download', 'error');
-			console.error(error);
+			if (error.errors) {
+				const errorMessages = Object.values(error.errors).join('. ');
+				notificationSystem.error(errorMessages);
+			} else {
+				notificationSystem.error('Error updating card');
+			}
+			console.error('Update error:', error);
 		}
-	}
+	});
 
-	collectFormData() {
-		// Recoger todos los valores de los inputs
-		return {
-			username: document.getElementById('username').value.trim(),
-			repoName: document.getElementById('repoName').value.trim(),
-			projectName: document.getElementById('projectName').value.trim(),
-			projectDescription: document.getElementById('projectDescription').value.trim(),
-		};
-	}
+	// Real-time repository name updates
+	eventManager.setupDOMEvent('#repoName', 'input', (event) => {
+		const repoName = event.target.value || '';
+		try {
+			cardManager.update({ repoName });
+			// We don't save to settings every time there's a change to avoid overloading storage
+		} catch (error) {
+			// We don't show errors in real-time to avoid bothering the user
+			console.debug('Real-time update validation error:', error);
+		}
+	});
 
-	saveSettings() {
-		// Guardar todas las preferencias en un solo objeto
-		const cardData = this.collectFormData();
-		const colorData = this.components.colorPicker.getColors();
+	// Button to download card
+	eventManager.setupDOMEvent('#downloadCard', 'click', async (event) => {
+		try {
+			event.target.disabled = true;
+			notificationSystem.info('Preparing your card for download...');
 
-		// Obtener información de imágenes
-		const imageData = {};
-		if (this.state.hasProjectLogo) {
-			imageData.logo = {
-				dataUrl: this.components.fileUploader.getProjectLogoUrl(),
-				name: 'project-logo',
+			// Get the card element
+			const cardElement = document.getElementById('cardWrapper');
+			if (!cardElement) {
+				throw new Error('Card element not found');
+			}
+
+			// Execute download through the export service
+			const filename = CONSTANTS.CARD_EXPORT.DEFAULT_FILENAME;
+			const success = await exportService.downloadCard(cardElement, filename, 'png');
+
+			if (!success) {
+				throw new Error(exportService.getLastError() || 'Failed to download card');
+			}
+
+			notificationSystem.success('Card downloaded successfully');
+		} catch (error) {
+			notificationSystem.error(`Error exporting card: ${error.message}`);
+			console.error('Export error:', error);
+		} finally {
+			event.target.disabled = false;
+		}
+	});
+
+	// Reset button in header
+	eventManager.setupDOMEvent('#resetForm', 'click', () => {
+		if (confirm('Are you sure you want to reset all fields?')) {
+			// Reset all components
+			cardManager.reset();
+			colorPicker.resetToDefaults();
+			fileUploader.reset();
+
+			// Clear settings
+			settingsManager.clearSettings();
+
+			notificationSystem.info('All settings have been reset');
+		}
+	});
+
+	// Help button
+	eventManager.setupDOMEvent('#helpButton', 'click', () => {
+		showHelpModal();
+	});
+
+	// Subscribe to settings change events
+	eventManager.on('settings:updated', ({ category, settings }) => {
+		// Apply changes based on updated settings
+		if (category === 'card') {
+			cardManager.applySettings(settings);
+		} else if (category === 'appearance') {
+			colorPicker.setColors(settings);
+		}
+	});
+
+	// Subscribe to file changes (logo and background)
+	document.addEventListener('filechange', (e) => {
+		const { type, dataUrl, file } = e.detail;
+
+		if (type === 'projectlogo') {
+			// Save project logo
+			storageService.saveItem('projectLogo', {
+				dataUrl,
+				name: file ? file.name : 'logo-image',
+			});
+		} else if (type === 'backgroundimage') {
+			// Save background image
+			storageService.saveItem('backgroundImage', {
+				dataUrl,
+				name: file ? file.name : 'background-image',
+			});
+		} else if (type === 'backgroundopacity') {
+			// Save background opacity
+			storageService.saveItem('backgroundOpacity', e.detail.value);
+		} else if (type === 'projectlogoremoved') {
+			// Remove saved logo
+			storageService.saveItem('projectLogo', null);
+		} else if (type === 'backgroundimageremoved') {
+			// Remove background image
+			storageService.saveItem('backgroundImage', null);
+		}
+	});
+
+	// Subscribe to color change events
+	document.addEventListener('colorpicker', (e) => {
+		if (e.detail.type === 'colorchange') {
+			const { property, value } = e.detail;
+
+			// Map CSS properties to configuration names
+			const propertyMap = {
+				'--border-color': 'borderColor',
+				'--project-text-color': 'projectColor',
+				'--bg-color': 'bgColor',
 			};
+
+			if (propertyMap[property]) {
+				const settingName = propertyMap[property];
+
+				// Load current colors from storageService
+				const colors = storageService.loadItem('colors') || {};
+
+				// Update the specific color
+				colors[settingName] = value;
+
+				// Save all updated colors
+				storageService.saveItem('colors', colors);
+
+				// Also update in settingsManager to keep synchronized
+				settingsManager.saveSettings('appearance', colors);
+			}
+		}
+	});
+}
+
+/**
+ * Loads all saved settings and applies them
+ * @param {Application} app - Application instance
+ */
+function loadSavedSettings(app) {
+	try {
+		const storageService = app.getService('storage');
+		const cardManager = app.getComponent('cardManager');
+		const colorPicker = app.getComponent('colorPicker');
+		const fileUploader = app.getComponent('fileUploader');
+		const settingsManager = app.getService('settings');
+
+		// 1. Load and apply colors
+		const colorSettings = storageService.loadItem('colors');
+		if (colorSettings) {
+			// Apply directly from localStorage as an object
+			colorPicker.setColors(colorSettings);
+
+			// Also update in SettingsManager to keep synchronized
+			settingsManager.saveSettings('appearance', colorSettings);
+			console.log('Colors loaded successfully', colorSettings);
 		}
 
-		if (this.state.hasBackgroundImage) {
-			imageData.background = {
-				dataUrl: this.components.fileUploader.getBackgroundImageUrl(),
-				name: 'background-image',
-			};
+		// 2. Load card settings
+		const cardSettings = storageService.loadItem('card');
+		if (cardSettings && Object.keys(cardSettings).length > 0) {
+			// Apply to cardManager
+			cardManager.applySettings(cardSettings);
+
+			// Load profile data if it has avatar_url
+			if (cardSettings.avatar_url) {
+				cardManager.renderer.updateAvatar(cardSettings.avatar_url);
+			}
+
+			// Update in settingsManager
+			settingsManager.saveSettings('card', cardSettings);
+			console.log('Card settings loaded successfully', cardSettings);
 		}
 
-		this.services.storage.save({
-			colors: colorData,
-			card: cardData,
-			images: Object.keys(imageData).length > 0 ? imageData : null,
-		});
-	}
+		// 3. Load project logo
+		const projectLogo = storageService.loadItem('projectLogo');
+		if (projectLogo && projectLogo.dataUrl) {
+			fileUploader.applyImage(projectLogo, 'logo');
+		}
 
-	resetApplication() {
-		// Limpiar formulario y restablecer estado
-		const confirmReset = confirm('¿Estás seguro de que quieres restablecer todos los cambios?');
-		if (confirmReset) {
-			// Restablecer componentes
-			this.components.cardManager.reset();
-			this.components.colorPicker.resetToDefaults();
-			this.components.fileUploader.reset();
+		// 4. Load background image
+		const backgroundImage = storageService.loadItem('backgroundImage');
+		if (backgroundImage && backgroundImage.dataUrl) {
+			fileUploader.applyImage(backgroundImage, 'background');
 
-			// Restablecer estado
-			this.state = {
-				profileLoaded: false,
-				hasProjectLogo: false,
-				hasBackgroundImage: false,
-			};
+			// Load background opacity if it exists
+			const opacity = storageService.loadItem('backgroundOpacity');
+			if (opacity !== null) {
+				// Apply opacity
+				const bgOpacitySlider = document.querySelector('#bgOpacity');
+				const bgOpacityValue = document.querySelector('#bgOpacityValue');
 
-			// Limpiar almacenamiento
-			this.services.storage.clear();
+				if (bgOpacitySlider && bgOpacityValue) {
+					bgOpacitySlider.value = opacity;
+					bgOpacityValue.textContent = opacity;
 
-			this.services.notifications.show('Application reset successfully', 'success');
+					// Trigger an event to update opacity visually
+					document.documentElement.style.setProperty('--bg-overlay-opacity', opacity);
+				}
+			}
+		}
+
+		console.log('Settings loaded successfully');
+	} catch (error) {
+		console.error('Error loading settings:', error);
+
+		// Silently fail, we don't want to block the application
+		const notificationSystem = app.getService('notifications');
+		if (notificationSystem) {
+			notificationSystem.warning('Some settings could not be loaded.');
 		}
 	}
 }
 
-// Inicialización al cargar el documento
-document.addEventListener('DOMContentLoaded', () => {
-	const app = new GitCardXApp();
-	app.init();
-});
+/**
+ * Shows a help modal
+ */
+function showHelpModal() {
+	// Create help modal
+	const modal = document.createElement('div');
+	modal.className = 'help-modal';
+
+	modal.innerHTML = `
+        <div class="help-modal-content">
+            <span class="help-modal-close">&times;</span>
+            <h2>${CONSTANTS.HELP_MODAL.TITLE}</h2>
+            <div class="help-modal-body">
+                <h3>${CONSTANTS.HELP_MODAL.SUBTITLE}</h3>
+                <ol>
+                    <li><strong>${CONSTANTS.HELP_MODAL.STEPS[0].title}</strong> ${CONSTANTS.HELP_MODAL.STEPS[0].content}</li>
+                    <li><strong>${CONSTANTS.HELP_MODAL.STEPS[1].title}</strong> ${CONSTANTS.HELP_MODAL.STEPS[1].content}</li>
+                    <li><strong>${CONSTANTS.HELP_MODAL.STEPS[2].title}</strong> ${CONSTANTS.HELP_MODAL.STEPS[2].content}</li>
+                    <li><strong>${CONSTANTS.HELP_MODAL.STEPS[3].title}</strong> ${CONSTANTS.HELP_MODAL.STEPS[3].content}</li>
+                </ol>
+                <p>${CONSTANTS.HELP_MODAL.FOOTER}</p>
+            </div>
+        </div>
+    `;
+
+	// Close modal when clicking X
+	const closeButton = modal.querySelector('.help-modal-close');
+	closeButton.addEventListener('click', () => {
+		document.body.removeChild(modal);
+	});
+
+	// Close modal when clicking outside the content
+	modal.addEventListener('click', (e) => {
+		if (e.target === modal) {
+			document.body.removeChild(modal);
+		}
+	});
+
+	// Add modal to the page
+	document.body.appendChild(modal);
+}
