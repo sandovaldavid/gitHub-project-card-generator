@@ -153,6 +153,7 @@ Este proyecto está licenciado bajo la Licencia MIT - consulta el archivo LICENS
 
 -   GitHub: [@sandovaldavid](https://github.com/sandovaldavid)
 -   LinkedIn: [@devsandoval](https://linkedin.com/in/devsandoval)
+-   Email: [contact@devsandoval.me](mailto:contact@devsandoval.me)
 
 ## 📌 Notas adicionales
 
