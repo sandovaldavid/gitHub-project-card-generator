@@ -63,10 +63,232 @@ class ExportPreparationService {
 			borderRadius: computedStyle.borderRadius,
 		});
 
+		// Inject specific CSS styles to override media queries
+		this.injectDesktopStyles(clonedElement);
+
 		// Configure internal elements (scaling, positions, etc.)
 		this.configureInternalElements(clonedElement, elementId, originalElement);
 
 		return clonedElement;
+	}
+
+	/**
+	 * Injects desktop styles directly into the element to override any media query
+	 * @param {HTMLElement} element - Element to apply the styles to
+	 */
+	injectDesktopStyles(element) {
+		// Create a style element that overrides all media queries
+		const styleElement = document.createElement('style');
+		styleElement.textContent = `
+			/* Forced desktop styles - override media queries */
+			#displayProjectName, .project-name {
+				font-size: 4rem !important;
+				font-weight: bold !important;
+				line-height: 1.2 !important;
+			}
+			
+			#displayUsername, .username {
+				font-size: 2rem !important;
+				font-weight: bold !important;
+			}
+			
+			#displayRepoName, .repo-name {
+				font-size: 2rem !important;
+				font-weight: bold !important;
+			}
+			
+			#displayDescription, .description {
+				font-size: 2rem !important;
+				line-height: 1.5 !important;
+				max-width: 90% !important;
+				margin: auto !important;
+				text-align: justify !important;
+			}
+			
+			#profilePic, .avatar {
+				width: 100px !important;
+				height: 100px !important;
+				border-radius: 50% !important;
+				margin-right: 20px !important;
+			}
+			
+			.github-logo {
+				width: 60px !important;
+				height: 60px !important;
+				border-radius: 50% !important;
+				background: white !important;
+				margin-left: 0.75rem !important;
+			}
+			
+			.project-logo, #displayProjectLogo {
+				height: 100px !important;
+				width: auto !important;
+			}
+			
+			.card-icon {
+				width: 48px !important;
+				height: 48px !important;
+			}
+			
+			.card-content {
+				width: 100% !important;
+				height: 100% !important;
+				display: flex !important;
+				flex-direction: column !important;
+				justify-content: space-between !important;
+				padding: 40pt 40pt 0 40pt !important;
+			}
+			
+			 /* Fix header alignment and its elements */
+			.header {
+				display: flex !important;
+				flex-direction: row !important;
+				align-items: center !important;
+				margin-bottom: 30px !important;
+				height: 80px !important;
+				min-height: 80px !important;
+				position: relative !important;
+			}
+			
+			.info {
+				flex: 1 !important;
+				display: flex !important;
+				flex-direction: row !important;
+				justify-content: space-between !important;
+				align-items: center !important;
+			}
+			
+			.content-reponame {
+				display: flex !important;
+				flex-direction: row !important;
+				align-items: center !important;
+				justify-content: flex-start !important;
+			}
+			
+			.card-footer {
+				display: flex !important;
+				justify-content: space-between !important;
+				position: relative !important;
+
+			}
+		`;
+
+		// Add the style to the cloned element to ensure the styles
+		// take precedence over any media query
+		element.appendChild(styleElement);
+
+		// Force application of inline styles to critical elements
+		this.forceDesktopStylesInline(element);
+	}
+
+	/**
+	 * Applies desktop styles directly as inline styles
+	 * to ensure maximum priority
+	 * @param {HTMLElement} element - Root element
+	 */
+	forceDesktopStylesInline(element) {
+		// Define selectors and their corresponding styles
+		const inlineStyles = {
+			'#displayProjectName, .project-name': {
+				fontSize: '4rem',
+				fontWeight: 'bold',
+				lineHeight: '1.2',
+			},
+			'#displayUsername, .username': {
+				fontSize: '2rem',
+				fontWeight: 'bold',
+			},
+			'#displayRepoName, .repo-name': {
+				fontSize: '2rem',
+				fontWeight: 'bold',
+			},
+			'#displayDescription, .description': {
+				fontSize: '2rem',
+				lineHeight: '1.5',
+				maxWidth: '90%',
+				margin: 'auto',
+				textAlign: 'justify',
+			},
+			'#profilePic, .avatar': {
+				width: '100px',
+				height: '100px',
+				borderRadius: '50%',
+				marginRight: '20px',
+			},
+			'.github-logo': {
+				width: '60px',
+				height: '60px',
+				borderRadius: '50%',
+				background: 'white',
+				marginLeft: '0.75rem',
+			},
+			'.header': {
+				display: 'flex',
+				flexDirection: 'row',
+				alignItems: 'center',
+				marginBottom: '30px',
+			},
+			'.info': {
+				flex: '1',
+				display: 'flex',
+				flexDirection: 'row',
+				justifyContent: 'space-between',
+				alignItems: 'center',
+			},
+			'.content-reponame': {
+				display: 'flex',
+				flexDirection: 'row',
+				alignItems: 'center',
+				justifyContent: 'flex-start',
+			},
+		};
+
+		// Apply inline styles directly
+		Object.entries(inlineStyles).forEach(([selector, styles]) => {
+			// Split multiple selectors
+			const selectors = selector.split(',').map((s) => s.trim());
+
+			selectors.forEach((singleSelector) => {
+				const elements = element.querySelectorAll(singleSelector);
+				elements.forEach((el) => {
+					Object.assign(el.style, styles);
+					// Add !important effectively
+					for (const property in styles) {
+						el.style.setProperty(property, styles[property], 'important');
+					}
+				});
+			});
+		});
+
+		// Ensure that HTML structure is not being modified by media queries
+		// Specifically check the order of elements in the header
+		const header = element.querySelector('.header');
+		if (header) {
+			const avatar = header.querySelector('.avatar, #profilePic');
+			const info = header.querySelector('.info');
+
+			// Ensure that the avatar is before the info
+			if (avatar && info && avatar.nextElementSibling !== info) {
+				header.innerHTML = '';
+				header.appendChild(avatar);
+				header.appendChild(info);
+			}
+
+			// Ensure correct structure within .info
+			if (info) {
+				const username = info.querySelector('.username, #displayUsername');
+				const contentReponame = info.querySelector('.content-reponame');
+
+				// Verify and correct the order if necessary
+				if (username && contentReponame) {
+					if (username.parentElement !== info || contentReponame.parentElement !== info) {
+						info.innerHTML = '';
+						info.appendChild(username);
+						info.appendChild(contentReponame);
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -588,19 +810,19 @@ export class ExportService {
 	 */
 	async downloadCard(element, filename = 'github-card', format = 'png', options = {}) {
 		try {
-			// Verificar si html2canvas está disponible
+			// Check if html2canvas is available
 			if (typeof html2canvas !== 'function') {
 				throw new Error(
 					'html2canvas library is not available. Please reload the page and try again.'
 				);
 			}
 
-			// Validar elemento
+			// Validate element
 			if (!element) {
 				throw new Error('Card element not found');
 			}
 
-			// Combinar opciones con valores predeterminados de la configuración
+			// Combine options with default values from configuration
 			const exportOptions = {
 				scale: CONSTANTS.CARD_EXPORT.SCALE || 2,
 				quality: CONSTANTS.CARD_EXPORT.QUALITY || 0.95,
@@ -609,10 +831,10 @@ export class ExportService {
 				filename,
 			};
 
-			// Pequeña espera para asegurar que la UI esté actualizada
+			// Small wait to ensure that the UI is updated
 			await new Promise((resolve) => setTimeout(resolve, 100));
 
-			// Exportar en el formato solicitado
+			// Export in the requested format
 			await this.exportElement(element, format, exportOptions);
 
 			return true;
